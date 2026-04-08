@@ -116,12 +116,22 @@ export async function getCurrentBook(): Promise<string | null> {
 }
 
 // Settings
+export type PdfViewMode = "single" | "continuous" | "spread";
+export type PdfColorMode = "normal" | "dark" | "sepia";
+
 export interface ReaderSettings {
   theme: "light" | "dark";
   fontSize: number;
   lineHeight: number;
   fontFamily: string;
   pinToolbar: boolean;
+  pdfViewMode: PdfViewMode;
+  pdfColorMode: PdfColorMode;
+  pdfShowThumbnails: boolean;
+  pdfShowViewMode: boolean;
+  pdfShowPageNav: boolean;
+  pdfShowColorMode: boolean;
+  pdfShowZoom: boolean;
 }
 
 const SETTINGS_KEY = "reader_settings";
@@ -132,6 +142,13 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
   lineHeight: 1.8,
   fontFamily: "'DM Sans', Arial, sans-serif",
   pinToolbar: false,
+  pdfViewMode: "continuous",
+  pdfColorMode: "normal",
+  pdfShowThumbnails: false,
+  pdfShowViewMode: true,
+  pdfShowPageNav: true,
+  pdfShowColorMode: true,
+  pdfShowZoom: true,
 };
 
 export async function saveSettings(settings: ReaderSettings): Promise<void> {
@@ -140,5 +157,7 @@ export async function saveSettings(settings: ReaderSettings): Promise<void> {
 
 export async function getSettings(): Promise<ReaderSettings> {
   const result = await chrome.storage.local.get(SETTINGS_KEY);
-  return (result[SETTINGS_KEY] as ReaderSettings | undefined) ?? DEFAULT_SETTINGS;
+  const stored = result[SETTINGS_KEY] as Partial<ReaderSettings> | undefined;
+  if (!stored) return DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...stored };
 }
