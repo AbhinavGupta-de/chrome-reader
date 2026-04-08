@@ -1,0 +1,218 @@
+import React, { useRef, useEffect, useCallback, useMemo, useState } from "react";
+import { LoadedBook } from "../hooks/useBook";
+import { ReadingPosition, ReaderSettings } from "../lib/storage";
+
+interface ReaderProps {
+  book: LoadedBook;
+  position: ReadingPosition | null;
+  settings: ReaderSettings;
+  onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
+  onTextSelect: (text: string, context: string) => void;
+}
+
+function estimateReadingTime(text: string): number {
+  return Math.max(1, Math.ceil(text.split(/\s+/).length / 230));
+}
+
+function stripHtml(html: string): string {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
+export default function Reader({ book, position, settings, onPositionChange, onTextSelect }: ReaderProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoredRef = useRef(false);
+  const [showNav, setShowNav] = useState(false);
+
+  if (book.format === "pdf" && book.pdf?.blobUrl) {
+    return <PdfViewer blobUrl={book.pdf.blobUrl} title={book.metadata.title} />;
+  }
+
+  const chapterIndex = position?.chapterIndex ?? 0;
+
+  const { content, totalSections, chapterLabel, plainText } = useMemo(() => {
+    if (book.format === "epub" && book.epub) {
+      const ch = book.epub.chapters[chapterIndex];
+      return {
+        content: ch?.content ?? "",
+        totalSections: book.epub.chapters.length,
+        chapterLabel: ch?.label ?? `Chapter ${chapterIndex + 1}`,
+        plainText: stripHtml(ch?.content ?? ""),
+      };
+    }
+    if (book.format === "txt" && book.txt) {
+      const chunk = book.txt.chunks[chapterIndex];
+      return {
+        content: `<div style="white-space: pre-wrap;">${(chunk ?? "").replace(/</g, "&lt;")}</div>`,
+        totalSections: book.txt.chunks.length,
+        chapterLabel: `Section ${chapterIndex + 1} of ${book.txt.chunks.length}`,
+        plainText: chunk ?? "",
+      };
+    }
+    return { content: "", totalSections: 0, chapterLabel: "", plainText: "" };
+  }, [book, chapterIndex]);
+
+  const readingTime = useMemo(() => estimateReadingTime(plainText), [plainText]);
+
+  useEffect(() => {
+    if (!contentRef.current || !position || restoredRef.current) return;
+    contentRef.current.scrollTop = position.scrollOffset;
+    restoredRef.current = true;
+  }, [content, position]);
+
+  useEffect(() => { restoredRef.current = false; }, [chapterIndex]);
+
+  const handleScroll = useCallback(() => {
+    if (!contentRef.current) return;
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => {
+      const el = contentRef.current!;
+      const scrollOffset = el.scrollTop;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      const chapterProgress = maxScroll > 0 ? scrollOffset / maxScroll : 0;
+      const pct = totalSections > 0 ? ((chapterIndex + chapterProgress) / totalSections) * 100 : 0;
+      onPositionChange(chapterIndex, scrollOffset, pct);
+    }, 300);
+  }, [chapterIndex, totalSections, onPositionChange]);
+
+  const goToChapter = useCallback((index: number) => {
+    if (index < 0 || index >= totalSections) return;
+    onPositionChange(index, 0, (index / totalSections) * 100);
+    restoredRef.current = false;
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  }, [totalSections, onPositionChange]);
+
+  const handleMouseUp = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const text = sel.toString().trim();
+    if (text.length > 0) onTextSelect(text, plainText.slice(0, 2000));
+  }, [plainText, onTextSelect]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") goToChapter(chapterIndex - 1);
+      if (e.key === "ArrowRight") goToChapter(chapterIndex + 1);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [chapterIndex, goToChapter]);
+
+  const hasPrev = chapterIndex > 0;
+  const hasNext = chapterIndex < totalSections - 1;
+
+  return (
+    <div className="flex flex-col h-full bg-cream text-clay-black relative">
+      {/* Content */}
+      <div
+        ref={contentRef}
+        onScroll={handleScroll}
+        onMouseUp={handleMouseUp}
+        className="flex-1 overflow-y-auto"
+        style={{ fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight, fontFamily: settings.fontFamily }}
+      >
+        <div className="max-w-2xl mx-auto px-6 pt-12 pb-4">
+          <p className="clay-label mb-1">{chapterLabel}</p>
+          <p className="text-sm text-silver">{readingTime} min read</p>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-6 pb-28">
+          <div className="prose-reader" dangerouslySetInnerHTML={{ __html: content }} />
+        </div>
+
+        {content && (
+          <div className="max-w-sm mx-auto px-6 pb-16 text-center">
+            <hr className="clay-divider w-16 mx-auto mb-6" />
+            <p className="text-xs text-silver mb-4">End of {chapterLabel.toLowerCase()}</p>
+            {hasNext && (
+              <button onClick={() => goToChapter(chapterIndex + 1)} className="clay-btn-solid text-sm">
+                Continue reading &rarr;
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Side nav — Clay hard-shadow buttons */}
+      {hasPrev && (
+        <button
+          onClick={() => goToChapter(chapterIndex - 1)}
+          className="clay-btn-white absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 !p-0 !rounded-[12px] flex items-center justify-center"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4L6 9l5 5" />
+          </svg>
+        </button>
+      )}
+      {hasNext && (
+        <button
+          onClick={() => goToChapter(chapterIndex + 1)}
+          className="clay-btn-white absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 !p-0 !rounded-[12px] flex items-center justify-center"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M7 4l5 5-5 5" />
+          </svg>
+        </button>
+      )}
+
+      {/* Bottom pill nav */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-5 pointer-events-none">
+        <div className="pointer-events-auto">
+          {!showNav ? (
+            <button
+              onClick={() => setShowNav(true)}
+              className="clay-btn-white !rounded-[1584px] text-xs !py-2 !px-5"
+            >
+              {chapterIndex + 1} / {totalSections} &middot; {Math.round(position?.percentage ?? 0)}%
+            </button>
+          ) : (
+            <div
+              className="clay-card flex items-center gap-3 px-4 py-2.5 !rounded-[1584px]"
+              onMouseLeave={() => setShowNav(false)}
+            >
+              <button
+                onClick={() => goToChapter(chapterIndex - 1)}
+                disabled={!hasPrev}
+                className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 3L4 7l5 4" />
+                </svg>
+              </button>
+              <input
+                type="range" min={0} max={Math.max(totalSections - 1, 1)} value={chapterIndex}
+                onChange={(e) => goToChapter(Number(e.target.value))}
+                className="w-44 accent-[#078a52]"
+              />
+              <button
+                onClick={() => goToChapter(chapterIndex + 1)}
+                disabled={!hasNext}
+                className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 3l5 4-5 4" />
+                </svg>
+              </button>
+              <span className="text-xs tabular-nums text-silver min-w-[3rem] text-center">
+                {Math.round(position?.percentage ?? 0)}%
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PdfViewer({ blobUrl, title }: { blobUrl: string; title: string }) {
+  return (
+    <div className="flex flex-col h-full bg-cream">
+      <div className="flex items-center justify-center py-2">
+        <span className="clay-label">{title}</span>
+      </div>
+      <embed src={blobUrl} type="application/pdf" className="flex-1 w-full rounded-t-[24px]" style={{ minHeight: 0 }} />
+    </div>
+  );
+}
