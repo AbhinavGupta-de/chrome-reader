@@ -1,0 +1,69 @@
+---
+description: Clay Design System — all UI must follow these patterns for colors, typography, shadows, borders, and components
+globs: "**/*.{tsx,css,html}"
+alwaysApply: false
+---
+
+# Clay Design System
+
+All UI in this project MUST follow the Clay design system. Never deviate.
+
+## Colors
+
+- **Background**: Warm Cream `#faf9f7` — never cool white or gray
+- **Text**: Clay Black `#000000`
+- **Secondary text**: Warm Silver `#9f9b93`
+- **Tertiary text**: Warm Charcoal `#55534e`
+- **Border (primary)**: Oat `#dad4c8` — always warm, never neutral gray
+- **Border (light)**: Oat Light `#eee9df`
+- **Accent green**: Matcha 300 `#84e7a5`, 600 `#078a52`, 800 `#02492a`
+- **Accent cyan**: Slushie 500 `#3bd3fd`, 800 `#0089ad`
+- **Accent gold**: Lemon 400 `#f8cc65`, 500 `#fbbd41`, 700 `#d08a11`
+- **Accent purple**: Ube 300 `#c1b0ff`, 800 `#43089f`
+- **Accent pink**: Pomegranate 400 `#fc7981`
+
+## Dark Theme (warm-inverted)
+
+- Background: `#1a1815`, Surface: `#23201b`, Border: `#3a362f`
+- Text: `#f0ede8`, Secondary: `#9f9b93`
+
+## Typography
+
+- **Primary font**: `'DM Sans', Arial, sans-serif` (substitute for Roobert)
+- **Mono font**: `'Space Mono', monospace`
+- **Headings**: weight 600, tight letter-spacing (e.g. -0.4px at 20px)
+- **UI/Buttons**: weight 500
+- **Body**: weight 400
+- **Uppercase labels**: 12px, weight 600, `text-transform: uppercase`, letter-spacing 1.08px
+
+## Shadows
+
+- **Clay Shadow**: `rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px`
+- **Hard Offset (hover)**: `rgb(0,0,0) -7px 7px`
+- Never use standard blur-based box shadows
+
+## Border Radius Scale
+
+- Sharp: 4px (inputs, ghost buttons)
+- Standard: 8px (small elements)
+- Card: 12px (cards, buttons)
+- Feature: 24px (feature cards, panels)
+- Section: 40px (large containers)
+- Pill: 1584px (CTAs, pill buttons)
+
+## Component Patterns
+
+- **Cards**: white bg, `1px solid #dad4c8`, 12–24px radius, clay-shadow
+- **Buttons**: Use `.clay-btn-solid` (black bg, white text) or `.clay-btn-white` (white bg, oat border, clay-shadow)
+- **Inputs**: `1px solid #dad4c8`, 8px radius, matcha-600 focus border
+- **Dividers**: `border-top: 1px solid #dad4c8`
+- **Labels**: Use `.clay-label` class (uppercase, 12px, weight 600, tracking 1.08px)
+- **Modals**: Fixed overlay with `bg-clay-black/30`, centered `.clay-card`
+- Mix solid and dashed borders for visual variety
+
+## Do NOT
+
+- Use cool gray backgrounds or borders (`#ccc`, `#ddd`, `#f5f5f5`)
+- Use standard blur shadows
+- Use border-radius < 12px on feature cards
+- Skip warm oat borders in favor of neutral ones

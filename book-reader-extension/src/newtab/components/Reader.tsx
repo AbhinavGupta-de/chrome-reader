@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { LoadedBook } from "../hooks/useBook";
-import { ReadingPosition, ReaderSettings } from "../lib/storage";
+import { ReadingPosition, ReaderSettings, getBook } from "../lib/storage";
 
 interface ReaderProps {
   book: LoadedBook;
@@ -20,14 +20,33 @@ function stripHtml(html: string): string {
   return tmp.textContent || tmp.innerText || "";
 }
 
+function cleanChapterLabel(label: string): string {
+  if (/\.(x?html?|xml|htm)$/i.test(label)) return "";
+  if (/^[A-Z0-9!@#$%^&*()\-_=+{}\[\]|\\;:'",.<>?/~`]+$/i.test(label) && label.length > 30) return "";
+  return label.trim();
+}
+
 export default function Reader({ book, position, settings, onPositionChange, onTextSelect }: ReaderProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef = useRef(false);
   const [showNav, setShowNav] = useState(false);
 
-  if (book.format === "pdf" && book.pdf?.blobUrl) {
-    return <PdfViewer blobUrl={book.pdf.blobUrl} title={book.metadata.title} />;
+  if (book.format === "pdf") {
+    if (!position) {
+      return (
+        <div className="flex flex-col h-full bg-cream items-center justify-center">
+          <div className="w-6 h-6 border-2 border-clay-black border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+    return (
+      <PdfViewer
+        bookHash={book.hash}
+        initialPage={position.chapterIndex + 1}
+        onPositionChange={onPositionChange}
+      />
+    );
   }
 
   const chapterIndex = position?.chapterIndex ?? 0;
@@ -102,10 +121,10 @@ export default function Reader({ book, position, settings, onPositionChange, onT
 
   const hasPrev = chapterIndex > 0;
   const hasNext = chapterIndex < totalSections - 1;
+  const displayLabel = cleanChapterLabel(chapterLabel) || `Chapter ${chapterIndex + 1}`;
 
   return (
     <div className="flex flex-col h-full bg-cream text-clay-black relative">
-      {/* Content */}
       <div
         ref={contentRef}
         onScroll={handleScroll}
@@ -114,7 +133,7 @@ export default function Reader({ book, position, settings, onPositionChange, onT
         style={{ fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight, fontFamily: settings.fontFamily }}
       >
         <div className="max-w-2xl mx-auto px-6 pt-12 pb-4">
-          <p className="clay-label mb-1">{chapterLabel}</p>
+          <p className="clay-label mb-1">{displayLabel}</p>
           <p className="text-sm text-silver">{readingTime} min read</p>
         </div>
 
@@ -125,7 +144,7 @@ export default function Reader({ book, position, settings, onPositionChange, onT
         {content && (
           <div className="max-w-sm mx-auto px-6 pb-16 text-center">
             <hr className="clay-divider w-16 mx-auto mb-6" />
-            <p className="text-xs text-silver mb-4">End of {chapterLabel.toLowerCase()}</p>
+            <p className="text-xs text-silver mb-4">End of {displayLabel.toLowerCase()}</p>
             {hasNext && (
               <button onClick={() => goToChapter(chapterIndex + 1)} className="clay-btn-solid text-sm">
                 Continue reading &rarr;
@@ -135,7 +154,6 @@ export default function Reader({ book, position, settings, onPositionChange, onT
         )}
       </div>
 
-      {/* Side nav — Clay hard-shadow buttons */}
       {hasPrev && (
         <button
           onClick={() => goToChapter(chapterIndex - 1)}
@@ -157,7 +175,6 @@ export default function Reader({ book, position, settings, onPositionChange, onT
         </button>
       )}
 
-      {/* Bottom pill nav */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-5 pointer-events-none">
         <div className="pointer-events-auto">
           {!showNav ? (
@@ -206,13 +223,300 @@ export default function Reader({ book, position, settings, onPositionChange, onT
   );
 }
 
-function PdfViewer({ blobUrl, title }: { blobUrl: string; title: string }) {
+/* ── Canvas-based PDF Viewer ── */
+
+function PdfViewer({
+  bookHash,
+  initialPage,
+  onPositionChange,
+}: {
+  bookHash: string;
+  initialPage: number;
+  onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pdfRef = useRef<any>(null);
+  const renderTaskRef = useRef<any>(null);
+
+  const startPage = Math.max(1, initialPage);
+  const [currentPage, setCurrentPage] = useState(startPage);
+  const [totalPages, setTotalPages] = useState(0);
+  const [inputValue, setInputValue] = useState(String(startPage));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const currentPageRef = useRef(startPage);
+
+  const ZOOM_MIN = 0.5;
+  const ZOOM_MAX = 3;
+  const ZOOM_STEP = 0.25;
+
+  // Load PDF via pdf.js from IndexedDB
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (typeof pdfjsLib === "undefined") {
+          setError("PDF engine not loaded");
+          setLoading(false);
+          return;
+        }
+
+        if (typeof chrome !== "undefined" && chrome.runtime) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL("pdf.worker.min.js");
+        }
+
+        const data = await getBook(bookHash);
+        if (!data || cancelled) { setLoading(false); return; }
+
+        const pdf = await pdfjsLib.getDocument({
+          data: data.slice(0),
+          isEvalSupported: false,
+        }).promise;
+
+        if (cancelled) return;
+        pdfRef.current = pdf;
+        setTotalPages(pdf.numPages);
+        if (startPage > pdf.numPages) {
+          setCurrentPage(1);
+          setInputValue("1");
+          currentPageRef.current = 1;
+        }
+        setLoading(false);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("PDF load error:", err);
+          setError("Failed to load PDF");
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [bookHash, startPage]);
+
+  const renderPage = useCallback(async () => {
+    const pdf = pdfRef.current;
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!pdf || !canvas || !container) return;
+
+    try {
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
+
+      const page = await pdf.getPage(currentPage);
+      const unscaledViewport = page.getViewport({ scale: 1 });
+      const containerWidth = container.clientWidth - 48;
+      const fitScale = Math.max(0.5, containerWidth / unscaledViewport.width);
+      const scale = fitScale * zoom;
+      const viewport = page.getViewport({ scale });
+
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * dpr);
+      canvas.height = Math.floor(viewport.height * dpr);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(dpr, dpr);
+
+      const task = page.render({ canvasContext: ctx, viewport });
+      renderTaskRef.current = task;
+      await task.promise;
+    } catch (err: any) {
+      if (err?.name !== "RenderingCancelled") console.error("Render error:", err);
+    }
+  }, [currentPage, zoom]);
+
+  useEffect(() => {
+    if (!loading && pdfRef.current) renderPage();
+  }, [loading, currentPage, renderPage]);
+
+  // Re-render on container resize (debounced to survive CSS transitions)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || loading) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => renderPage(), 300);
+    });
+    ro.observe(container);
+    return () => { ro.disconnect(); clearTimeout(timer); };
+  }, [loading, renderPage]);
+
+  const savePage = useCallback(
+    (page: number) => {
+      currentPageRef.current = page;
+      const pct = totalPages > 0 ? (page / totalPages) * 100 : 0;
+      onPositionChange(page - 1, 0, pct);
+    },
+    [totalPages, onPositionChange]
+  );
+
+  const goToPage = useCallback(
+    (page: number) => {
+      const clamped = Math.max(1, Math.min(page, totalPages || 1));
+      setCurrentPage(clamped);
+      setInputValue(String(clamped));
+      currentPageRef.current = clamped;
+      savePage(clamped);
+    },
+    [totalPages, savePage]
+  );
+
+  const zoomIn = useCallback(() => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2))), []);
+  const zoomOut = useCallback(() => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2))), []);
+  const zoomReset = useCallback(() => setZoom(1), []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); goToPage(currentPageRef.current - 1); }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") { e.preventDefault(); goToPage(currentPageRef.current + 1); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+")) { e.preventDefault(); zoomIn(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "-") { e.preventDefault(); zoomOut(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "0") { e.preventDefault(); zoomReset(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [goToPage, zoomIn, zoomOut, zoomReset]);
+
+  // Auto-save on close / hide
+  useEffect(() => {
+    const onUnload = () => savePage(currentPageRef.current);
+    const onVisChange = () => { if (document.hidden) savePage(currentPageRef.current); };
+    window.addEventListener("beforeunload", onUnload);
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      document.removeEventListener("visibilitychange", onVisChange);
+    };
+  }, [savePage]);
+
+  const handleInputBlur = () => {
+    const page = parseInt(inputValue, 10);
+    if (!isNaN(page) && page >= 1) goToPage(page);
+    else setInputValue(String(currentPage));
+  };
+
+  const pct = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full bg-cream items-center justify-center">
+        <div className="w-6 h-6 border-2 border-clay-black border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-silver mt-3">Loading PDF&hellip;</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full bg-cream items-center justify-center px-6">
+        <p className="text-sm text-pomegranate-400 mb-2">{error}</p>
+        <p className="text-xs text-silver text-center">Try reloading the extension or re-importing the PDF.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-cream">
-      <div className="flex items-center justify-center py-2">
-        <span className="clay-label">{title}</span>
+      {/* Page controls */}
+      <div className="flex items-center justify-center px-4 py-2 border-b border-oat gap-3 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
+            title="Previous page (←)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 3L4 7l5 4" />
+            </svg>
+          </button>
+
+          <div className="flex items-center gap-1.5 text-xs">
+            <input
+              type="number"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={handleInputBlur}
+              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+              className="w-14 text-center text-xs font-medium bg-transparent border border-oat rounded-[8px] py-1 focus:outline-none focus:border-matcha-600 transition-colors tabular-nums"
+              min={1}
+              max={totalPages}
+            />
+            <span className="text-silver whitespace-nowrap">/ {totalPages}</span>
+          </div>
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
+            title="Next page (→)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 3l5 4-5 4" />
+            </svg>
+          </button>
+
+          <div className="w-px h-5 bg-oat mx-0.5" />
+          <span className="text-[11px] text-silver tabular-nums">{pct}%</span>
+
+          <div className="w-px h-5 bg-oat mx-0.5" />
+
+          <button
+            onClick={zoomOut}
+            disabled={zoom <= ZOOM_MIN}
+            className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
+            title="Zoom out (Ctrl −)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M3 7h8" />
+            </svg>
+          </button>
+
+          <button
+            onClick={zoomReset}
+            className="text-[11px] text-silver tabular-nums hover:text-clay-black transition-colors min-w-[3rem] text-center"
+            title="Reset zoom (Ctrl 0)"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+
+          <button
+            onClick={zoomIn}
+            disabled={zoom >= ZOOM_MAX}
+            className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
+            title="Zoom in (Ctrl +)"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M7 3v8M3 7h8" />
+            </svg>
+          </button>
+        </div>
       </div>
-      <embed src={blobUrl} type="application/pdf" className="flex-1 w-full rounded-t-[24px]" style={{ minHeight: 0 }} />
+
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-auto flex justify-center py-6 px-6"
+        style={{ background: "var(--oat, #e8e5e0)" }}
+        onWheel={(e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) zoomIn();
+            else if (e.deltaY > 0) zoomOut();
+          }
+        }}
+      >
+        <canvas ref={canvasRef} className="shadow-lg rounded-sm" />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { parseEpub, ParsedEpub } from "../lib/parsers/epub";
-import { parsePdf, ParsedPdf, revokePdfUrl } from "../lib/parsers/pdf";
+import { parsePdf, ParsedPdf } from "../lib/parsers/pdf";
 import { parseTxt, ParsedTxt } from "../lib/parsers/txt";
 import {
   saveBook,
@@ -78,10 +78,7 @@ export function useBook() {
         }
       }
 
-      setCurrentBookState((prev) => {
-        if (prev?.pdf?.blobUrl) revokePdfUrl(prev.pdf.blobUrl);
-        return loaded;
-      });
+      setCurrentBookState(loaded);
       await setCurrentBook(hash);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load book");
@@ -126,7 +123,10 @@ export function useBook() {
             break;
           }
           case "pdf": {
-            // Title stays as filename — native viewer handles rendering
+            const pdfInfo = await parsePdf(arrayBuffer);
+            if (pdfInfo.title && pdfInfo.title !== "PDF Document") meta.title = pdfInfo.title;
+            meta.author = pdfInfo.author;
+            meta.totalPages = pdfInfo.totalPages;
             break;
           }
           case "txt": {
@@ -150,9 +150,6 @@ export function useBook() {
 
   const removeBook = useCallback(
     async (hash: string) => {
-      if (currentBook?.hash === hash && currentBook.pdf?.blobUrl) {
-        revokePdfUrl(currentBook.pdf.blobUrl);
-      }
       await deleteBookFromStorage(hash);
       if (currentBook?.hash === hash) {
         setCurrentBookState(null);
