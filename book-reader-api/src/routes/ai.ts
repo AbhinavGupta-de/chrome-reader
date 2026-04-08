@@ -5,12 +5,23 @@ import {
   askAboutBook,
   extractHighlights,
   explainPassage,
+  isAIAvailable,
 } from "../services/ai.js";
 import type { AppVariables } from "../types.js";
 
 const ai = new Hono<{ Variables: AppVariables }>();
 
 ai.use("/*", authMiddleware);
+
+ai.use("/*", async (c, next) => {
+  if (!isAIAvailable()) {
+    return c.json(
+      { error: "AI features are not configured on this server" },
+      503
+    );
+  }
+  await next();
+});
 
 ai.post("/summarize", async (c) => {
   const userId = c.get("userId") as string;

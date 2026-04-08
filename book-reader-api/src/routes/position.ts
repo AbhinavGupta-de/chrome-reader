@@ -9,6 +9,17 @@ const position = new Hono<{ Variables: AppVariables }>();
 
 position.use("/*", authMiddleware);
 
+function formatPosition(pos: typeof readingPositions.$inferSelect) {
+  return {
+    bookHash: pos.bookHash,
+    bookTitle: pos.bookTitle,
+    chapterIndex: pos.chapterIndex,
+    scrollOffset: pos.scrollOffset,
+    percentage: pos.percentage,
+    updatedAt: pos.updatedAt.toISOString(),
+  };
+}
+
 position.get("/:bookHash", async (c) => {
   const userId = c.get("userId") as string;
   const bookHash = c.req.param("bookHash");
@@ -26,28 +37,25 @@ position.get("/:bookHash", async (c) => {
     .then((rows) => rows[0] ?? null);
 
   if (!pos) {
-    return c.json({ error: "Position not found" }, 404);
+    return c.json(null);
   }
 
-  return c.json({
-    bookHash: pos.bookHash,
-    bookTitle: pos.bookTitle,
-    chapterIndex: pos.chapterIndex,
-    scrollOffset: pos.scrollOffset,
-    percentage: pos.percentage,
-    updatedAt: pos.updatedAt.toISOString(),
-  });
+  return c.json(formatPosition(pos));
 });
 
 position.put("/:bookHash", async (c) => {
   const userId = c.get("userId") as string;
   const bookHash = c.req.param("bookHash");
   const body = await c.req.json<{
-    bookTitle: string;
-    chapterIndex: number;
-    scrollOffset: number;
-    percentage: number;
+    bookTitle?: string;
+    chapterIndex?: number;
+    scrollOffset?: number;
+    percentage?: number;
   }>();
+
+  const chapterIndex = typeof body.chapterIndex === "number" ? body.chapterIndex : 0;
+  const scrollOffset = typeof body.scrollOffset === "number" ? body.scrollOffset : 0;
+  const percentage = Math.max(0, Math.min(100, typeof body.percentage === "number" ? body.percentage : 0));
 
   const existing = await db
     .select()
@@ -66,22 +74,15 @@ position.put("/:bookHash", async (c) => {
       .update(readingPositions)
       .set({
         bookTitle: body.bookTitle || existing.bookTitle,
-        chapterIndex: body.chapterIndex,
-        scrollOffset: body.scrollOffset,
-        percentage: body.percentage,
+        chapterIndex,
+        scrollOffset,
+        percentage,
         updatedAt: new Date(),
       })
       .where(eq(readingPositions.id, existing.id))
       .returning();
 
-    return c.json({
-      bookHash: updated.bookHash,
-      bookTitle: updated.bookTitle,
-      chapterIndex: updated.chapterIndex,
-      scrollOffset: updated.scrollOffset,
-      percentage: updated.percentage,
-      updatedAt: updated.updatedAt.toISOString(),
-    });
+    return c.json(formatPosition(updated));
   }
 
   const [created] = await db
@@ -90,20 +91,13 @@ position.put("/:bookHash", async (c) => {
       userId,
       bookHash,
       bookTitle: body.bookTitle || "",
-      chapterIndex: body.chapterIndex,
-      scrollOffset: body.scrollOffset,
-      percentage: body.percentage,
+      chapterIndex,
+      scrollOffset,
+      percentage,
     })
     .returning();
 
-  return c.json({
-    bookHash: created.bookHash,
-    bookTitle: created.bookTitle,
-    chapterIndex: created.chapterIndex,
-    scrollOffset: created.scrollOffset,
-    percentage: created.percentage,
-    updatedAt: created.updatedAt.toISOString(),
-  });
+  return c.json(formatPosition(created));
 });
 
 export default position;

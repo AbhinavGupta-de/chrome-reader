@@ -45,7 +45,7 @@ export default function App() {
     [updatePosition]
   );
 
-  const handleTextSelect = useCallback((text: string) => { setSelectedText(text); }, []);
+  const handleTextSelect = useCallback((text: string, _context: string) => { setSelectedText(text); }, []);
 
   const getCurrentChapterText = useCallback((): string => {
     if (!currentBook || !position) return "";

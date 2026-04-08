@@ -1,8 +1,12 @@
-import { chat } from "../lib/anthropic.js";
+import { chat, anthropic } from "../lib/anthropic.js";
 import { db } from "../db/index.js";
 import { aiCache } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
+
+export function isAIAvailable(): boolean {
+  return anthropic !== null;
+}
 
 function hashRequest(type: string, ...parts: string[]): string {
   return crypto

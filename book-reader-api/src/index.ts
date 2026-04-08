@@ -12,11 +12,16 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: [
-      "chrome-extension://*",
-      "http://localhost:5173",
-      "http://localhost:3000",
-    ],
+    origin: (origin) => {
+      if (!origin) return "http://localhost:3000";
+      if (origin.startsWith("chrome-extension://")) return origin;
+      const allowed = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+      ];
+      if (allowed.includes(origin)) return origin;
+      return null as unknown as string;
+    },
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   })

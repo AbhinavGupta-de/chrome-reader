@@ -1,5 +1,12 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+// Share the API URL with the service worker so it doesn't need to hardcode it
+try {
+  if (typeof chrome !== "undefined" && chrome.storage?.local) {
+    chrome.storage.local.set({ api_url: API_BASE });
+  }
+} catch { /* not in extension context */ }
+
 let authToken: string | null = null;
 
 export function setAuthToken(token: string | null) {

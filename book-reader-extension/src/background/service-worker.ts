@@ -1,5 +1,7 @@
 const SYNC_ALARM = "position-sync";
 const SYNC_INTERVAL_MINUTES = 0.5;
+const API_CONFIG_KEY = "api_url";
+const DEFAULT_API_URL = "http://localhost:3000";
 
 interface AuthData {
   token: string;
@@ -14,6 +16,15 @@ interface StoredPosition {
   updatedAt: number;
 }
 
+async function getApiUrl(): Promise<string> {
+  try {
+    const result = await chrome.storage.local.get(API_CONFIG_KEY);
+    return (result[API_CONFIG_KEY] as string) || DEFAULT_API_URL;
+  } catch {
+    return DEFAULT_API_URL;
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create(SYNC_ALARM, {
     periodInMinutes: SYNC_INTERVAL_MINUTES,
@@ -23,13 +34,12 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== SYNC_ALARM) return;
 
-  // Skip sync entirely if not authenticated — the app works fine offline
   try {
     const authResult = await chrome.storage.local.get("auth_data");
     const authData = authResult["auth_data"] as AuthData | undefined;
     if (!authData?.token) return;
 
-    const apiUrl = "http://localhost:3000";
+    const apiUrl = await getApiUrl();
     const allItems = await chrome.storage.local.get(null);
 
     const positionEntries = Object.entries(allItems).filter(([key]) =>
