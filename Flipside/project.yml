@@ -1,0 +1,153 @@
+name: Flipside
+options:
+  bundleIdPrefix: com.flipside
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: ""
+
+packages:
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation.git
+    from: "0.9.19"
+
+targets:
+  FlipsideApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: FlipsideApp
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.flipside.reader
+        INFOPLIST_FILE: FlipsideApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FlipsideApp/FlipsideApp.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: true
+        SWIFT_STRICT_CONCURRENCY: targeted
+    dependencies:
+      - target: FlipsideWidgets
+        embed: true
+        codeSign: true
+        buildPhase:
+          copyFiles:
+            destination: plugins
+      - target: FlipsideShareExtension
+        embed: true
+        codeSign: true
+        buildPhase:
+          copyFiles:
+            destination: plugins
+      - package: ZIPFoundation
+    entitlements:
+      path: FlipsideApp/FlipsideApp.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.flipside.reader
+    info:
+      path: FlipsideApp/Info.plist
+      properties:
+        CFBundleDisplayName: Flipside
+        CFBundleName: Flipside
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        LSSupportsOpeningDocumentsInPlace: true
+        UISupportsDocumentBrowser: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: EPUB
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - org.idpf.epub-container
+          - CFBundleTypeName: PDF
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.adobe.pdf
+          - CFBundleTypeName: Plain Text
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.plain-text
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: org.idpf.epub-container
+            UTTypeDescription: EPUB Document
+            UTTypeConformsTo:
+              - public.data
+              - public.composite-content
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - epub
+              public.mime-type:
+                - application/epub+zip
+
+  FlipsideWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: FlipsideWidgets
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.flipside.reader.widgets
+        INFOPLIST_FILE: FlipsideWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FlipsideWidgets/FlipsideWidgets.entitlements
+        SWIFT_STRICT_CONCURRENCY: targeted
+    entitlements:
+      path: FlipsideWidgets/FlipsideWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.flipside.reader
+    info:
+      path: FlipsideWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Flipside Widgets
+        CFBundleName: FlipsideWidgets
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+  FlipsideShareExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: FlipsideShareExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.flipside.reader.share
+        INFOPLIST_FILE: FlipsideShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FlipsideShareExtension/FlipsideShareExtension.entitlements
+        SWIFT_STRICT_CONCURRENCY: targeted
+    entitlements:
+      path: FlipsideShareExtension/FlipsideShareExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.flipside.reader
+    info:
+      path: FlipsideShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Open in Flipside
+        CFBundleName: FlipsideShare
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 1

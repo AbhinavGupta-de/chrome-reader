@@ -1,0 +1,754 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01F3E110FF2893B444CEB332 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFFE05B89641A6BACAD6BACC /* SettingsView.swift */; };
+		113071DCC774D25BB741BFED /* FlipsideWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A84E706F6483BC478EB4BB46 /* FlipsideWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		193C87D9FCC4862BA88D3DC5 /* ImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B896DB70C32393A968F304 /* ImportSheet.swift */; };
+		22A75FF4F9E542CA2217F7FD /* AppGroupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BAE2A84FCEDB4B7B110731B /* AppGroupManager.swift */; };
+		2972932470095D0E975FCB76 /* PrevPageIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEC64C6D7F8C72ADDB85AD /* PrevPageIntent.swift */; };
+		3F2931D3FF4108DA48AB98BC /* PDFReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDD23A801DF3593C2B372063 /* PDFReaderView.swift */; };
+		46B9CE9618C740FEBC0F6008 /* TXTReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5A6DF70B914B6E1C77AA7D /* TXTReaderView.swift */; };
+		4CC0435FBBB34FB9B4700096 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B69E9053A577F8461AE3CAD6 /* ThemeManager.swift */; };
+		5208D9366A9B30EF60300634 /* ReadingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D388ADB0AAFEFAAEFA406B /* ReadingWidget.swift */; };
+		52B57AF1901DC16F527BCE10 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F6102B1542EC9DF7579074 /* ReaderView.swift */; };
+		54127173A2785B84DCB920DE /* ZoomInIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4251F1EB79D76A2D2C724C44 /* ZoomInIntent.swift */; };
+		5D980FB90531BAD010B032FE /* NextPageIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65A625CE7E290AA9FBCF27F /* NextPageIntent.swift */; };
+		6286A6BE6723173BAA13E51B /* FlipsideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72970649315672CF7A30B72 /* FlipsideApp.swift */; };
+		67A331155166349B4F5627AC /* BookmarkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4AB15231DAF330BA2FF9F34 /* BookmarkIntent.swift */; };
+		6911B2AD8190B77F0F37530D /* WidgetDataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142971513DFFCE7E013B9F59 /* WidgetDataProvider.swift */; };
+		6EBD62F6E5F16C8036341A49 /* AppGroupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BAE2A84FCEDB4B7B110731B /* AppGroupManager.swift */; };
+		739954397B4A107F73C965C4 /* CloudImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0AE984E79D299BC01FACA0 /* CloudImporter.swift */; };
+		78064F612BC6DCD6B953E1E2 /* ReaderSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59C7B5EF24048FF12B011E4 /* ReaderSettings.swift */; };
+		7AFD74D85168ACBF4AA5D06F /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = D73CB38CC986232B3BB9A922 /* ZIPFoundation */; };
+		82FB7E97213150D9E3EABF74 /* PDFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 557095CD0D9F5078E3403326 /* PDFService.swift */; };
+		8CCA0E7D0C10AEAF3D5A9BB2 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49247720635CA9A5C09419C /* Book.swift */; };
+		9133E5C425CBFB6E8E9C52C6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C59BEB9EEC0924E6BAC09BB /* ContentView.swift */; };
+		92EA0708AA47ABFF0D0A4C2C /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C4F170C8ED0C80EBE2F4D1 /* ShareViewController.swift */; };
+		93F659F2DCC73ECA3D64BD9D /* TextExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89731507F430E88143844DEC /* TextExtractor.swift */; };
+		9A73F0214BBF3FE73AADABB7 /* LockScreenWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B061D33CDEFC27C46C9856C /* LockScreenWidget.swift */; };
+		9E3931A3AE44797F563BDF20 /* FlipsideShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9BCAF845A9544D2C59005774 /* FlipsideShareExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A1D10704E65577D5E0BA6C70 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B69E9053A577F8461AE3CAD6 /* ThemeManager.swift */; };
+		A67DCBE6092034904073F566 /* TextExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89731507F430E88143844DEC /* TextExtractor.swift */; };
+		A91DEC1330A3050101CED8F4 /* StandByWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB7DD86B5D36D7BE9A18F69 /* StandByWidget.swift */; };
+		AA1091BEE54E969AA03EF3EB /* ScrollUpIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297B3B50F85AF1D2E8EB58B1 /* ScrollUpIntent.swift */; };
+		ACAAE332EDE7392F90DD87A5 /* BookImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07050CE4DC507C82B284D6C7 /* BookImporter.swift */; };
+		B20E59242CD5081C989E6535 /* EPUBParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55EE44C676FD8B27463EE8CC /* EPUBParser.swift */; };
+		B5B545D979236D9092006BEC /* ScrollDownIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F8339BE29BC5563F36D4E9 /* ScrollDownIntent.swift */; };
+		B774DE77709DB15F26395035 /* BookFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = C96BFC6C471194E6BDA4A123 /* BookFormat.swift */; };
+		BDF32B3882526E2BD988B24F /* ZoomOutIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A37D5BF7392759375007B8D /* ZoomOutIntent.swift */; };
+		D018266EA60DAD337BD98185 /* ReadingPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120FFE6D7C6B2CCA5D4F1DC9 /* ReadingPosition.swift */; };
+		DF6BDCCAFB2A024C8966865E /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988ED9CABE58F7F6AB552276 /* LibraryView.swift */; };
+		E084F32560A7151A7A99A528 /* EPUBReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0582E55A9711329E7CEB8923 /* EPUBReaderView.swift */; };
+		EB534617990B8C3291D25166 /* FlipsideWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A836DBBAAAAFF66BB2D0614 /* FlipsideWidgets.swift */; };
+		F601B39E145532FA10DEE41B /* BookFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = C96BFC6C471194E6BDA4A123 /* BookFormat.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		131F76AB62318E4408E83F9F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0B70334EDDF5476980016FBB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D447A5DA1749BC4E6FA4C101;
+			remoteInfo = FlipsideShareExtension;
+		};
+		A3FA6F81C2BB6298BBD0ACCB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0B70334EDDF5476980016FBB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1734A6A83F408642CE70431E;
+			remoteInfo = FlipsideWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2F3D04FB17DA35ACBF15733D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				113071DCC774D25BB741BFED /* FlipsideWidgets.appex in Embed Foundation Extensions */,
+				9E3931A3AE44797F563BDF20 /* FlipsideShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0223D9561A597CC8EB046CAD /* FlipsideApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlipsideApp.entitlements; sourceTree = "<group>"; };
+		0582E55A9711329E7CEB8923 /* EPUBReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPUBReaderView.swift; sourceTree = "<group>"; };
+		05955FC9C757B87533A6623D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		06CFFE191B7B21EF4B4618A6 /* FlipsideWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlipsideWidgets.entitlements; sourceTree = "<group>"; };
+		07050CE4DC507C82B284D6C7 /* BookImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookImporter.swift; sourceTree = "<group>"; };
+		120FFE6D7C6B2CCA5D4F1DC9 /* ReadingPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPosition.swift; sourceTree = "<group>"; };
+		142971513DFFCE7E013B9F59 /* WidgetDataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataProvider.swift; sourceTree = "<group>"; };
+		1BAE2A84FCEDB4B7B110731B /* AppGroupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupManager.swift; sourceTree = "<group>"; };
+		297B3B50F85AF1D2E8EB58B1 /* ScrollUpIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollUpIntent.swift; sourceTree = "<group>"; };
+		3EB7DD86B5D36D7BE9A18F69 /* StandByWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByWidget.swift; sourceTree = "<group>"; };
+		41D388ADB0AAFEFAAEFA406B /* ReadingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingWidget.swift; sourceTree = "<group>"; };
+		4251F1EB79D76A2D2C724C44 /* ZoomInIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomInIntent.swift; sourceTree = "<group>"; };
+		4B0E83FA52EBA833A1EE098C /* FlipsideShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlipsideShareExtension.entitlements; sourceTree = "<group>"; };
+		4C59BEB9EEC0924E6BAC09BB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		4C5A6DF70B914B6E1C77AA7D /* TXTReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TXTReaderView.swift; sourceTree = "<group>"; };
+		52B896DB70C32393A968F304 /* ImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportSheet.swift; sourceTree = "<group>"; };
+		557095CD0D9F5078E3403326 /* PDFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFService.swift; sourceTree = "<group>"; };
+		55EE44C676FD8B27463EE8CC /* EPUBParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPUBParser.swift; sourceTree = "<group>"; };
+		5A37D5BF7392759375007B8D /* ZoomOutIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomOutIntent.swift; sourceTree = "<group>"; };
+		6A836DBBAAAAFF66BB2D0614 /* FlipsideWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipsideWidgets.swift; sourceTree = "<group>"; };
+		6D0AE984E79D299BC01FACA0 /* CloudImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudImporter.swift; sourceTree = "<group>"; };
+		78C4F170C8ED0C80EBE2F4D1 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		89731507F430E88143844DEC /* TextExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextExtractor.swift; sourceTree = "<group>"; };
+		8B061D33CDEFC27C46C9856C /* LockScreenWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenWidget.swift; sourceTree = "<group>"; };
+		91D8148ECD0179FF9CD12CF3 /* FlipsideApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlipsideApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		988ED9CABE58F7F6AB552276 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		9BCAF845A9544D2C59005774 /* FlipsideShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FlipsideShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A84E706F6483BC478EB4BB46 /* FlipsideWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FlipsideWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0F6102B1542EC9DF7579074 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
+		B69E9053A577F8461AE3CAD6 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		B8C153C180BCF15B37A10A34 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BEBEC64C6D7F8C72ADDB85AD /* PrevPageIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrevPageIntent.swift; sourceTree = "<group>"; };
+		C59C7B5EF24048FF12B011E4 /* ReaderSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettings.swift; sourceTree = "<group>"; };
+		C72970649315672CF7A30B72 /* FlipsideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipsideApp.swift; sourceTree = "<group>"; };
+		C96BFC6C471194E6BDA4A123 /* BookFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookFormat.swift; sourceTree = "<group>"; };
+		CFFE05B89641A6BACAD6BACC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E49247720635CA9A5C09419C /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		E4AB15231DAF330BA2FF9F34 /* BookmarkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkIntent.swift; sourceTree = "<group>"; };
+		E65A625CE7E290AA9FBCF27F /* NextPageIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextPageIntent.swift; sourceTree = "<group>"; };
+		F7F8339BE29BC5563F36D4E9 /* ScrollDownIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollDownIntent.swift; sourceTree = "<group>"; };
+		F868A2F329DEA3844465B8A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FDD23A801DF3593C2B372063 /* PDFReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReaderView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6841650AD9DD321F39988033 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7AFD74D85168ACBF4AA5D06F /* ZIPFoundation in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		039BB98243A35BB21FA19EB2 /* FlipsideShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				4B0E83FA52EBA833A1EE098C /* FlipsideShareExtension.entitlements */,
+				B8C153C180BCF15B37A10A34 /* Info.plist */,
+				78C4F170C8ED0C80EBE2F4D1 /* ShareViewController.swift */,
+			);
+			path = FlipsideShareExtension;
+			sourceTree = "<group>";
+		};
+		1E61F8EA8E9A3468C24EF765 = {
+			isa = PBXGroup;
+			children = (
+				28DAE75A46F5160DA9897313 /* FlipsideApp */,
+				039BB98243A35BB21FA19EB2 /* FlipsideShareExtension */,
+				E20DB472D1287E5C2B65ACFF /* FlipsideWidgets */,
+				E53A3ED859BAD47BB3A28690 /* Shared */,
+				3D376E11C156113DD21B3394 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		28DAE75A46F5160DA9897313 /* FlipsideApp */ = {
+			isa = PBXGroup;
+			children = (
+				0223D9561A597CC8EB046CAD /* FlipsideApp.entitlements */,
+				F868A2F329DEA3844465B8A5 /* Info.plist */,
+				42F40EC25651B6D0FB62C818 /* App */,
+				839A1BFA886FFA5D7CBA2C45 /* Models */,
+				745FF5D6B911A3A3B6EB59A9 /* Services */,
+				A185A5F2E9D1675E4D028A96 /* Views */,
+			);
+			path = FlipsideApp;
+			sourceTree = "<group>";
+		};
+		3D376E11C156113DD21B3394 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				91D8148ECD0179FF9CD12CF3 /* FlipsideApp.app */,
+				9BCAF845A9544D2C59005774 /* FlipsideShareExtension.appex */,
+				A84E706F6483BC478EB4BB46 /* FlipsideWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		400B8DAA5230BBF29D3D1AE8 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				E4AB15231DAF330BA2FF9F34 /* BookmarkIntent.swift */,
+				E65A625CE7E290AA9FBCF27F /* NextPageIntent.swift */,
+				BEBEC64C6D7F8C72ADDB85AD /* PrevPageIntent.swift */,
+				F7F8339BE29BC5563F36D4E9 /* ScrollDownIntent.swift */,
+				297B3B50F85AF1D2E8EB58B1 /* ScrollUpIntent.swift */,
+				4251F1EB79D76A2D2C724C44 /* ZoomInIntent.swift */,
+				5A37D5BF7392759375007B8D /* ZoomOutIntent.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		42F40EC25651B6D0FB62C818 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				4C59BEB9EEC0924E6BAC09BB /* ContentView.swift */,
+				C72970649315672CF7A30B72 /* FlipsideApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		4CD9193D898C5549725F4FCD /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				CFFE05B89641A6BACAD6BACC /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		745FF5D6B911A3A3B6EB59A9 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				07050CE4DC507C82B284D6C7 /* BookImporter.swift */,
+				6D0AE984E79D299BC01FACA0 /* CloudImporter.swift */,
+				55EE44C676FD8B27463EE8CC /* EPUBParser.swift */,
+				557095CD0D9F5078E3403326 /* PDFService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		839A1BFA886FFA5D7CBA2C45 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E49247720635CA9A5C09419C /* Book.swift */,
+				C59C7B5EF24048FF12B011E4 /* ReaderSettings.swift */,
+				120FFE6D7C6B2CCA5D4F1DC9 /* ReadingPosition.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A185A5F2E9D1675E4D028A96 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B906BD6A4A6979B577E08490 /* Library */,
+				EBA6A8F4F579C1921A9BDB47 /* Reader */,
+				4CD9193D898C5549725F4FCD /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B906BD6A4A6979B577E08490 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				52B896DB70C32393A968F304 /* ImportSheet.swift */,
+				988ED9CABE58F7F6AB552276 /* LibraryView.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
+		E20DB472D1287E5C2B65ACFF /* FlipsideWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				06CFFE191B7B21EF4B4618A6 /* FlipsideWidgets.entitlements */,
+				6A836DBBAAAAFF66BB2D0614 /* FlipsideWidgets.swift */,
+				05955FC9C757B87533A6623D /* Info.plist */,
+				8B061D33CDEFC27C46C9856C /* LockScreenWidget.swift */,
+				41D388ADB0AAFEFAAEFA406B /* ReadingWidget.swift */,
+				3EB7DD86B5D36D7BE9A18F69 /* StandByWidget.swift */,
+				142971513DFFCE7E013B9F59 /* WidgetDataProvider.swift */,
+				400B8DAA5230BBF29D3D1AE8 /* Intents */,
+			);
+			path = FlipsideWidgets;
+			sourceTree = "<group>";
+		};
+		E53A3ED859BAD47BB3A28690 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				1BAE2A84FCEDB4B7B110731B /* AppGroupManager.swift */,
+				C96BFC6C471194E6BDA4A123 /* BookFormat.swift */,
+				89731507F430E88143844DEC /* TextExtractor.swift */,
+				B69E9053A577F8461AE3CAD6 /* ThemeManager.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		EBA6A8F4F579C1921A9BDB47 /* Reader */ = {
+			isa = PBXGroup;
+			children = (
+				0582E55A9711329E7CEB8923 /* EPUBReaderView.swift */,
+				FDD23A801DF3593C2B372063 /* PDFReaderView.swift */,
+				B0F6102B1542EC9DF7579074 /* ReaderView.swift */,
+				4C5A6DF70B914B6E1C77AA7D /* TXTReaderView.swift */,
+			);
+			path = Reader;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1734A6A83F408642CE70431E /* FlipsideWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBDAE7E7EA104CFA2FA4B4FA /* Build configuration list for PBXNativeTarget "FlipsideWidgets" */;
+			buildPhases = (
+				F1D26CA5F5F891B423996DC4 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FlipsideWidgets;
+			packageProductDependencies = (
+			);
+			productName = FlipsideWidgets;
+			productReference = A84E706F6483BC478EB4BB46 /* FlipsideWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		8E670696E7644693DD7ADFE5 /* FlipsideApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5FA62D3865ACCF26FC7D96A2 /* Build configuration list for PBXNativeTarget "FlipsideApp" */;
+			buildPhases = (
+				4E29F7D5F372F31BB67BD53C /* Sources */,
+				6841650AD9DD321F39988033 /* Frameworks */,
+				2F3D04FB17DA35ACBF15733D /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				588CA56A95928951AFC73D3C /* PBXTargetDependency */,
+				B2075A34A20BE4EF9B3EE8FB /* PBXTargetDependency */,
+			);
+			name = FlipsideApp;
+			packageProductDependencies = (
+				D73CB38CC986232B3BB9A922 /* ZIPFoundation */,
+			);
+			productName = FlipsideApp;
+			productReference = 91D8148ECD0179FF9CD12CF3 /* FlipsideApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D447A5DA1749BC4E6FA4C101 /* FlipsideShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2B1FCB5E0283771AF1F38E9 /* Build configuration list for PBXNativeTarget "FlipsideShareExtension" */;
+			buildPhases = (
+				B7CEF7A119095D2BE3EA9C72 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FlipsideShareExtension;
+			packageProductDependencies = (
+			);
+			productName = FlipsideShareExtension;
+			productReference = 9BCAF845A9544D2C59005774 /* FlipsideShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0B70334EDDF5476980016FBB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = C0C294FC48A6B0BB4653F233 /* Build configuration list for PBXProject "Flipside" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1E61F8EA8E9A3468C24EF765;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EA49AA6B6EFF9CBC412B3BF7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3D376E11C156113DD21B3394 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8E670696E7644693DD7ADFE5 /* FlipsideApp */,
+				D447A5DA1749BC4E6FA4C101 /* FlipsideShareExtension */,
+				1734A6A83F408642CE70431E /* FlipsideWidgets */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4E29F7D5F372F31BB67BD53C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22A75FF4F9E542CA2217F7FD /* AppGroupManager.swift in Sources */,
+				8CCA0E7D0C10AEAF3D5A9BB2 /* Book.swift in Sources */,
+				F601B39E145532FA10DEE41B /* BookFormat.swift in Sources */,
+				ACAAE332EDE7392F90DD87A5 /* BookImporter.swift in Sources */,
+				739954397B4A107F73C965C4 /* CloudImporter.swift in Sources */,
+				9133E5C425CBFB6E8E9C52C6 /* ContentView.swift in Sources */,
+				B20E59242CD5081C989E6535 /* EPUBParser.swift in Sources */,
+				E084F32560A7151A7A99A528 /* EPUBReaderView.swift in Sources */,
+				6286A6BE6723173BAA13E51B /* FlipsideApp.swift in Sources */,
+				193C87D9FCC4862BA88D3DC5 /* ImportSheet.swift in Sources */,
+				DF6BDCCAFB2A024C8966865E /* LibraryView.swift in Sources */,
+				3F2931D3FF4108DA48AB98BC /* PDFReaderView.swift in Sources */,
+				82FB7E97213150D9E3EABF74 /* PDFService.swift in Sources */,
+				78064F612BC6DCD6B953E1E2 /* ReaderSettings.swift in Sources */,
+				52B57AF1901DC16F527BCE10 /* ReaderView.swift in Sources */,
+				D018266EA60DAD337BD98185 /* ReadingPosition.swift in Sources */,
+				01F3E110FF2893B444CEB332 /* SettingsView.swift in Sources */,
+				46B9CE9618C740FEBC0F6008 /* TXTReaderView.swift in Sources */,
+				93F659F2DCC73ECA3D64BD9D /* TextExtractor.swift in Sources */,
+				A1D10704E65577D5E0BA6C70 /* ThemeManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7CEF7A119095D2BE3EA9C72 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92EA0708AA47ABFF0D0A4C2C /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1D26CA5F5F891B423996DC4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6EBD62F6E5F16C8036341A49 /* AppGroupManager.swift in Sources */,
+				B774DE77709DB15F26395035 /* BookFormat.swift in Sources */,
+				67A331155166349B4F5627AC /* BookmarkIntent.swift in Sources */,
+				EB534617990B8C3291D25166 /* FlipsideWidgets.swift in Sources */,
+				9A73F0214BBF3FE73AADABB7 /* LockScreenWidget.swift in Sources */,
+				5D980FB90531BAD010B032FE /* NextPageIntent.swift in Sources */,
+				2972932470095D0E975FCB76 /* PrevPageIntent.swift in Sources */,
+				5208D9366A9B30EF60300634 /* ReadingWidget.swift in Sources */,
+				B5B545D979236D9092006BEC /* ScrollDownIntent.swift in Sources */,
+				AA1091BEE54E969AA03EF3EB /* ScrollUpIntent.swift in Sources */,
+				A91DEC1330A3050101CED8F4 /* StandByWidget.swift in Sources */,
+				A67DCBE6092034904073F566 /* TextExtractor.swift in Sources */,
+				4CC0435FBBB34FB9B4700096 /* ThemeManager.swift in Sources */,
+				6911B2AD8190B77F0F37530D /* WidgetDataProvider.swift in Sources */,
+				54127173A2785B84DCB920DE /* ZoomInIntent.swift in Sources */,
+				BDF32B3882526E2BD988B24F /* ZoomOutIntent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		588CA56A95928951AFC73D3C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1734A6A83F408642CE70431E /* FlipsideWidgets */;
+			targetProxy = A3FA6F81C2BB6298BBD0ACCB /* PBXContainerItemProxy */;
+		};
+		B2075A34A20BE4EF9B3EE8FB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D447A5DA1749BC4E6FA4C101 /* FlipsideShareExtension */;
+			targetProxy = 131F76AB62318E4408E83F9F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		115CF6D9D51F412EBD26D35D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = FlipsideApp/FlipsideApp.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6988872SHM;
+				INFOPLIST_FILE = FlipsideApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flipside.reader;
+				SDKROOT = iphoneos;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		526DDA9788AE57C7E8BF6317 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = FlipsideApp/FlipsideApp.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6988872SHM;
+				INFOPLIST_FILE = FlipsideApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flipside.reader;
+				SDKROOT = iphoneos;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		5A5F01E030E23619F05759A5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		71E286F0EC097781CBB8F801 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FlipsideWidgets/FlipsideWidgets.entitlements;
+				DEVELOPMENT_TEAM = 6988872SHM;
+				INFOPLIST_FILE = FlipsideWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flipside.reader.widgets;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AD0EE5040F5522AA39558B6B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FlipsideShareExtension/FlipsideShareExtension.entitlements;
+				DEVELOPMENT_TEAM = 6988872SHM;
+				INFOPLIST_FILE = FlipsideShareExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flipside.reader.share;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BFBAE68E7CAEA7FAEBFB5B9E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FlipsideShareExtension/FlipsideShareExtension.entitlements;
+				DEVELOPMENT_TEAM = 6988872SHM;
+				INFOPLIST_FILE = FlipsideShareExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flipside.reader.share;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CD3D3746850AEF32A152A42C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		EE80929B733001C30ADAE562 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FlipsideWidgets/FlipsideWidgets.entitlements;
+				DEVELOPMENT_TEAM = 6988872SHM;
+				INFOPLIST_FILE = FlipsideWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flipside.reader.widgets;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5FA62D3865ACCF26FC7D96A2 /* Build configuration list for PBXNativeTarget "FlipsideApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				115CF6D9D51F412EBD26D35D /* Debug */,
+				526DDA9788AE57C7E8BF6317 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BBDAE7E7EA104CFA2FA4B4FA /* Build configuration list for PBXNativeTarget "FlipsideWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EE80929B733001C30ADAE562 /* Debug */,
+				71E286F0EC097781CBB8F801 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C0C294FC48A6B0BB4653F233 /* Build configuration list for PBXProject "Flipside" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A5F01E030E23619F05759A5 /* Debug */,
+				CD3D3746850AEF32A152A42C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E2B1FCB5E0283771AF1F38E9 /* Build configuration list for PBXNativeTarget "FlipsideShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD0EE5040F5522AA39558B6B /* Debug */,
+				BFBAE68E7CAEA7FAEBFB5B9E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EA49AA6B6EFF9CBC412B3BF7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.19;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D73CB38CC986232B3BB9A922 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA49AA6B6EFF9CBC412B3BF7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 0B70334EDDF5476980016FBB /* Project object */;
+}
