@@ -232,7 +232,7 @@ export default function App() {
         <Library books={library} currentHash={currentBook?.hash ?? null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
       )}
       {showSettings && (
-        <Settings settings={settings} onChange={handleSettingsChange} onClose={() => setShowSettings(false)} />
+        <Settings settings={settings} onChange={handleSettingsChange} onClose={() => setShowSettings(false)} isPdf={currentBook?.format === "pdf"} />
       )}
     </div>
   );
