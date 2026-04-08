@@ -8,7 +8,8 @@ interface PdfContinuousViewProps {
   currentPage: number;
   zoom: number;
   colorMode: PdfColorMode;
-  onPageChange: (page: number) => void;
+  onPageChange: (page: number, scrollRatio: number) => void;
+  initialScrollOffset: number;
 }
 
 const BUFFER_PAGES = 3;
@@ -22,6 +23,7 @@ export default function PdfContinuousView({
   zoom,
   colorMode,
   onPageChange,
+  initialScrollOffset,
 }: PdfContinuousViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -114,7 +116,7 @@ export default function PdfContinuousView({
 
     let ticking = false;
     const detectPage = () => {
-      if (isNavigatingRef.current) return;
+      if (isNavigatingRef.current || !initialScrollDone.current) return;
       const containerTop = scrollEl.getBoundingClientRect().top;
       let best = internalPageRef.current;
       let bestTop = -Infinity;
@@ -125,10 +127,19 @@ export default function PdfContinuousView({
           best = pageNum;
         }
       }
-      if (best !== internalPageRef.current) {
-        internalPageRef.current = best;
-        onPageChangeRef.current(best);
+
+      let scrollRatio = 0;
+      const bestEl = pageRefsMap.current.get(best);
+      if (bestEl) {
+        const pageHeight = bestEl.clientHeight;
+        if (pageHeight > 0) {
+          const elTop = bestEl.getBoundingClientRect().top - containerTop;
+          scrollRatio = Math.max(0, Math.min(1, -elTop / pageHeight));
+        }
       }
+
+      internalPageRef.current = best;
+      onPageChangeRef.current(best, scrollRatio);
     };
 
     const onScroll = () => {
@@ -183,19 +194,29 @@ export default function PdfContinuousView({
     if (initialScrollDone.current || !scrollRef.current || containerWidth <= 0) return;
     const el = pageRefsMap.current.get(currentPage);
     if (el) {
+      isNavigatingRef.current = true;
       el.scrollIntoView({ block: "start" });
+      if (initialScrollOffset > 0 && scrollRef.current && el.clientHeight > 0) {
+        scrollRef.current.scrollTop += Math.round(initialScrollOffset * el.clientHeight);
+      }
       initialScrollDone.current = true;
+      setTimeout(() => { isNavigatingRef.current = false; }, 500);
     }
-  }, [containerWidth, currentPage]);
+  }, [containerWidth, currentPage, initialScrollOffset]);
 
-  // Re-center on current page after zoom changes
+  // Re-center on current page after zoom or page-height changes (skip during initial scroll)
+  const prevHeightRef = useRef(estimatedPageHeight);
   useEffect(() => {
+    const isHeightChange = prevHeightRef.current !== estimatedPageHeight;
+    prevHeightRef.current = estimatedPageHeight;
     const timer = setTimeout(() => {
+      if (isNavigatingRef.current) return;
+      if (!initialScrollDone.current) return;
       const el = pageRefsMap.current.get(internalPageRef.current);
       if (el) el.scrollIntoView({ block: "start" });
-    }, 100);
+    }, isHeightChange ? 20 : 100);
     return () => clearTimeout(timer);
-  }, [zoom]);
+  }, [zoom, estimatedPageHeight]);
 
   useEffect(() => {
     return () => clearTimeout(navTimerRef.current);
@@ -228,7 +249,7 @@ export default function PdfContinuousView({
                 ref={(el) => setPageRef(pageNum, el)}
                 data-page-wrapper={pageNum}
                 className="flex justify-center"
-                style={{ minHeight: shouldRender ? undefined : `${estimatedPageHeight}px` }}
+                style={{ minHeight: `${estimatedPageHeight}px` }}
               >
                 {shouldRender && (
                   <PdfPage

@@ -13,6 +13,7 @@ export type PdfColorMode = "normal" | "dark" | "sepia";
 interface PdfViewerProps {
   bookHash: string;
   initialPage: number;
+  initialScrollOffset: number;
   settings: ReaderSettings;
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
 }
@@ -21,7 +22,7 @@ const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.05;
 
-export default function PdfViewer({ bookHash, initialPage, settings, onPositionChange }: PdfViewerProps) {
+export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onPositionChange }: PdfViewerProps) {
   const { pdfDoc, totalPages, loading, error } = usePdfDocument(bookHash);
 
   const startPage = Math.max(1, initialPage);
@@ -33,9 +34,9 @@ export default function PdfViewer({ bookHash, initialPage, settings, onPositionC
 
   const containerRef = useRef<HTMLDivElement>(null);
   const currentPageRef = useRef(startPage);
+  const currentScrollRatioRef = useRef(initialScrollOffset);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     setViewMode(settings.pdfViewMode ?? "continuous");
@@ -44,43 +45,37 @@ export default function PdfViewer({ bookHash, initialPage, settings, onPositionC
   }, [settings.pdfViewMode, settings.pdfColorMode, settings.pdfShowThumbnails]);
 
   const savePage = useCallback(
-    (page: number) => {
+    (page: number, scrollRatio?: number) => {
       currentPageRef.current = page;
-      const pct = totalPages > 0 ? (page / totalPages) * 100 : 0;
-      onPositionChange(page - 1, 0, pct);
+      const ratio = scrollRatio ?? currentScrollRatioRef.current;
+      currentScrollRatioRef.current = ratio;
+      const pct = totalPages > 0 ? ((page - 1 + ratio) / totalPages) * 100 : 0;
+      onPositionChange(page - 1, ratio, pct);
     },
     [totalPages, onPositionChange]
   );
-
-  const debouncedSavePage = useCallback(
-    (page: number) => {
-      clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => savePage(page), 300);
-    },
-    [savePage]
-  );
-
-  useEffect(() => {
-    return () => clearTimeout(saveTimerRef.current);
-  }, []);
 
   const goToPage = useCallback(
     (page: number) => {
       const clamped = Math.max(1, Math.min(page, totalPages || 1));
       setCurrentPage(clamped);
       currentPageRef.current = clamped;
-      savePage(clamped);
+      currentScrollRatioRef.current = 0;
+      savePage(clamped, 0);
     },
     [totalPages, savePage]
   );
 
   const handlePageChange = useCallback(
-    (page: number) => {
-      setCurrentPage(page);
-      currentPageRef.current = page;
-      debouncedSavePage(page);
+    (page: number, scrollRatio: number = 0) => {
+      currentScrollRatioRef.current = scrollRatio;
+      if (page !== currentPageRef.current) {
+        setCurrentPage(page);
+        currentPageRef.current = page;
+      }
+      savePage(page, scrollRatio);
     },
-    [debouncedSavePage]
+    [savePage]
   );
 
   const zoomIn = useCallback(() => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2))), []);
@@ -137,17 +132,6 @@ export default function PdfViewer({ bookHash, initialPage, settings, onPositionC
   }, [zoomIn, zoomOut]);
 
   useEffect(() => {
-    const onUnload = () => savePage(currentPageRef.current);
-    const onVisChange = () => { if (document.hidden) savePage(currentPageRef.current); };
-    window.addEventListener("beforeunload", onUnload);
-    document.addEventListener("visibilitychange", onVisChange);
-    return () => {
-      window.removeEventListener("beforeunload", onUnload);
-      document.removeEventListener("visibilitychange", onVisChange);
-    };
-  }, [savePage]);
-
-  useEffect(() => {
     if (pdfDoc && startPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
       currentPageRef.current = 1;
@@ -179,6 +163,7 @@ export default function PdfViewer({ bookHash, initialPage, settings, onPositionC
     zoom,
     colorMode,
     onPageChange: handlePageChange,
+    initialScrollOffset,
   };
 
   return (

@@ -45,6 +45,7 @@ export default function Reader({ book, position, settings, onPositionChange, onT
       <PdfViewer
         bookHash={book.hash}
         initialPage={position.chapterIndex + 1}
+        initialScrollOffset={position.scrollOffset}
         settings={settings}
         onPositionChange={onPositionChange}
       />

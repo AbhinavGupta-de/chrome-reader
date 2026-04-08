@@ -14,7 +14,9 @@ interface UsePositionOptions {
 
 export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions) {
   const [position, setPositionState] = useState<ReadingPosition | null>(null);
+  const positionRef = useRef<ReadingPosition | null>(null);
   const dirtyRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -24,6 +26,7 @@ export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions
       const local = await getPosition(bookHash);
       if (local) {
         setPositionState(local);
+        positionRef.current = local;
       } else {
         const defaultPos: ReadingPosition = {
           bookHash,
@@ -33,9 +36,9 @@ export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions
           updatedAt: Date.now(),
         };
         setPositionState(defaultPos);
+        positionRef.current = defaultPos;
       }
 
-      // Only attempt remote reconciliation when signed in and online
       if (isAuthenticated() && isOnline()) {
         try {
           const remote = await getRemotePosition(bookHash);
@@ -51,6 +54,7 @@ export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions
                 updatedAt: remoteTime,
               };
               setPositionState(merged);
+              positionRef.current = merged;
               await savePosition(merged);
             }
           }
@@ -62,7 +66,7 @@ export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions
   }, [bookHash, enabled]);
 
   const updatePosition = useCallback(
-    async (chapterIndex: number, scrollOffset: number, percentage: number) => {
+    (chapterIndex: number, scrollOffset: number, percentage: number) => {
       if (!bookHash) return;
 
       const pos: ReadingPosition = {
@@ -72,12 +76,37 @@ export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions
         percentage,
         updatedAt: Date.now(),
       };
+
       setPositionState(pos);
-      await savePosition(pos);
-      dirtyRef.current = true;
+      positionRef.current = pos;
+
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(async () => {
+        await savePosition(pos);
+        dirtyRef.current = true;
+      }, 300);
     },
     [bookHash]
   );
+
+  // Flush latest position to storage on unload / tab hide
+  useEffect(() => {
+    const flush = () => {
+      clearTimeout(saveTimerRef.current);
+      if (positionRef.current) {
+        savePosition(positionRef.current);
+        dirtyRef.current = true;
+      }
+    };
+    const onVisChange = () => { if (document.hidden) flush(); };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisChange);
+      clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   // Periodic sync — only runs when authenticated and online
   useEffect(() => {

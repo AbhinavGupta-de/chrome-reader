@@ -8,7 +8,8 @@ interface PdfSingleViewProps {
   currentPage: number;
   zoom: number;
   colorMode: PdfColorMode;
-  onPageChange: (page: number) => void;
+  onPageChange: (page: number, scrollRatio: number) => void;
+  initialScrollOffset: number;
 }
 
 export default function PdfSingleView({

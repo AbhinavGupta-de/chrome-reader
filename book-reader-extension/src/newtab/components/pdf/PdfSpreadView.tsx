@@ -8,7 +8,8 @@ interface PdfSpreadViewProps {
   currentPage: number;
   zoom: number;
   colorMode: PdfColorMode;
-  onPageChange: (page: number) => void;
+  onPageChange: (page: number, scrollRatio: number) => void;
+  initialScrollOffset: number;
 }
 
 interface SpreadRow {
@@ -41,6 +42,7 @@ export default function PdfSpreadView({
   zoom,
   colorMode,
   onPageChange,
+  initialScrollOffset,
 }: PdfSpreadViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [visibleRows, setVisibleRows] = useState<Set<number>>(() => new Set([0]));
@@ -139,7 +141,7 @@ export default function PdfSpreadView({
 
     let ticking = false;
     const detectPage = () => {
-      if (isNavigatingRef.current) return;
+      if (isNavigatingRef.current || !initialScrollDone.current) return;
       const containerTop = scrollEl.getBoundingClientRect().top;
       let bestRowIdx = -1;
       let bestTop = -Infinity;
@@ -152,9 +154,18 @@ export default function PdfSpreadView({
       }
       if (bestRowIdx >= 0) {
         const row = spreadsRef.current[bestRowIdx];
-        if (row && row.startPage !== internalPageRef.current) {
+        if (row) {
+          let scrollRatio = 0;
+          const rowEl = rowRefsMap.current.get(bestRowIdx);
+          if (rowEl) {
+            const rowHeight = rowEl.clientHeight;
+            if (rowHeight > 0) {
+              const elTop = rowEl.getBoundingClientRect().top - containerTop;
+              scrollRatio = Math.max(0, Math.min(1, -elTop / rowHeight));
+            }
+          }
           internalPageRef.current = row.startPage;
-          onPageChangeRef.current(row.startPage);
+          onPageChangeRef.current(row.startPage, scrollRatio);
         }
       }
     };
@@ -219,20 +230,30 @@ export default function PdfSpreadView({
     const rowIdx = findRowForPage(currentPage);
     const el = rowRefsMap.current.get(rowIdx);
     if (el) {
+      isNavigatingRef.current = true;
       el.scrollIntoView({ block: "start" });
+      if (initialScrollOffset > 0 && scrollRef.current && el.clientHeight > 0) {
+        scrollRef.current.scrollTop += Math.round(initialScrollOffset * el.clientHeight);
+      }
       initialScrollDone.current = true;
+      setTimeout(() => { isNavigatingRef.current = false; }, 500);
     }
-  }, [containerWidth, currentPage, findRowForPage]);
+  }, [containerWidth, currentPage, findRowForPage, initialScrollOffset]);
 
-  // Re-center after zoom
+  // Re-center after zoom or row-height changes (skip during initial scroll)
+  const prevRowHeightRef = useRef(estimatedRowHeight);
   useEffect(() => {
+    const isHeightChange = prevRowHeightRef.current !== estimatedRowHeight;
+    prevRowHeightRef.current = estimatedRowHeight;
     const timer = setTimeout(() => {
+      if (isNavigatingRef.current) return;
+      if (!initialScrollDone.current) return;
       const rowIdx = findRowForPage(internalPageRef.current);
       const el = rowRefsMap.current.get(rowIdx);
       if (el) el.scrollIntoView({ block: "start" });
-    }, 100);
+    }, isHeightChange ? 20 : 100);
     return () => clearTimeout(timer);
-  }, [zoom, findRowForPage]);
+  }, [zoom, findRowForPage, estimatedRowHeight]);
 
   useEffect(() => {
     return () => clearTimeout(navTimerRef.current);
@@ -264,7 +285,7 @@ export default function PdfSpreadView({
                 ref={(el) => setRowRef(rowIdx, el)}
                 data-row={rowIdx}
                 className={`flex justify-center ${useNarrow ? "flex-col items-center gap-3" : "gap-4"}`}
-                style={{ minHeight: shouldRender ? undefined : `${estimatedRowHeight}px` }}
+                style={{ minHeight: `${estimatedRowHeight}px` }}
               >
                 {shouldRender &&
                   row.pages.map((pageNum) => (
