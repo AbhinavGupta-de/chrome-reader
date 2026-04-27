@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, memo } from "react";
 import type { PdfColorMode } from "./PdfViewer";
+import { renderPdfHighlights, clearPdfHighlights } from "../../lib/highlights/pdfRender";
 import "./pdfTextLayer.css";
 
 interface PdfPageProps {
@@ -8,6 +9,8 @@ interface PdfPageProps {
   zoom: number;
   colorMode: PdfColorMode;
   maxWidth: number;
+  highlights?: import("../../lib/highlights/types").Highlight[];
+  onHighlightClick?: (id: string, rect: DOMRect) => void;
 }
 
 const COLOR_FILTERS: Record<PdfColorMode, string> = {
@@ -23,11 +26,17 @@ function isCancellation(err: any): boolean {
   return false;
 }
 
-const PdfPage = memo(function PdfPage({ pdfDoc, pageNumber, zoom, colorMode, maxWidth }: PdfPageProps) {
+const PdfPage = memo(function PdfPage({ pdfDoc, pageNumber, zoom, colorMode, maxWidth, highlights = [], onHighlightClick }: PdfPageProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const renderTaskRef = useRef<any>(null);
   const textTaskRef = useRef<any>(null);
+
+  const highlightsRef = useRef(highlights);
+  highlightsRef.current = highlights;
+  const onHighlightClickRef = useRef(onHighlightClick);
+  onHighlightClickRef.current = onHighlightClick;
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +96,18 @@ const PdfPage = memo(function PdfPage({ pdfDoc, pageNumber, zoom, colorMode, max
             textTaskRef.current = textTask;
             await textTask.promise;
             textTaskRef.current = null;
+
+            if (wrapperRef.current && tlEl) {
+              const visible = (highlightsRef.current ?? []).filter(
+                (h) => h.anchor.chapterIndex === pageNumber - 1
+              );
+              renderPdfHighlights(
+                wrapperRef.current,
+                tlEl,
+                visible,
+                onHighlightClickRef.current ?? (() => {})
+              );
+            }
           } catch (textErr: any) {
             if (!isCancellation(textErr)) {
               console.warn("Text layer skipped:", textErr?.message);
@@ -108,10 +129,24 @@ const PdfPage = memo(function PdfPage({ pdfDoc, pageNumber, zoom, colorMode, max
     };
   }, [pdfDoc, pageNumber, zoom, maxWidth]);
 
+  // Re-render highlight overlays when highlights change (without rerunning canvas/text-layer rendering)
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const tl = textLayerRef.current;
+    if (!wrapper || !tl) return;
+    if (tl.children.length === 0) return;
+    const visible = highlights.filter((h) => h.anchor.chapterIndex === pageNumber - 1);
+    renderPdfHighlights(wrapper, tl, visible, onHighlightClick ?? (() => {}));
+    return () => {
+      if (wrapperRef.current) clearPdfHighlights(wrapperRef.current);
+    };
+  }, [highlights, pageNumber, onHighlightClick]);
+
   const filter = COLOR_FILTERS[colorMode];
 
   return (
     <div
+      ref={wrapperRef}
       className="pdf-page-wrapper relative inline-block"
       data-page={pageNumber}
       style={{ filter: filter !== "none" ? filter : undefined }}

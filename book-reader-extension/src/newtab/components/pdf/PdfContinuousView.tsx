@@ -10,6 +10,8 @@ interface PdfContinuousViewProps {
   colorMode: PdfColorMode;
   onPageChange: (page: number, scrollRatio: number) => void;
   initialScrollOffset: number;
+  highlights?: import("../../lib/highlights/types").Highlight[];
+  onHighlightClick?: (id: string, rect: DOMRect) => void;
 }
 
 const BUFFER_PAGES = 3;
@@ -24,6 +26,8 @@ export default function PdfContinuousView({
   colorMode,
   onPageChange,
   initialScrollOffset,
+  highlights = [],
+  onHighlightClick,
 }: PdfContinuousViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -258,6 +262,8 @@ export default function PdfContinuousView({
                     zoom={zoom}
                     colorMode={colorMode}
                     maxWidth={pageMaxWidth}
+                    highlights={highlights}
+                    onHighlightClick={onHighlightClick}
                   />
                 )}
               </div>

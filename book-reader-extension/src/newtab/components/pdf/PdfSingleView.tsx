@@ -10,6 +10,8 @@ interface PdfSingleViewProps {
   colorMode: PdfColorMode;
   onPageChange: (page: number, scrollRatio: number) => void;
   initialScrollOffset: number;
+  highlights?: import("../../lib/highlights/types").Highlight[];
+  onHighlightClick?: (id: string, rect: DOMRect) => void;
 }
 
 export default function PdfSingleView({
@@ -17,6 +19,8 @@ export default function PdfSingleView({
   currentPage,
   zoom,
   colorMode,
+  highlights = [],
+  onHighlightClick,
 }: PdfSingleViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -52,6 +56,8 @@ export default function PdfSingleView({
           zoom={zoom}
           colorMode={colorMode}
           maxWidth={pageMaxWidth}
+          highlights={highlights}
+          onHighlightClick={onHighlightClick}
         />
       )}
     </div>

@@ -54,11 +54,9 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
         </>
       ) : (
         <>
-          {!isPdf && (
-            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
-              Highlight
-            </button>
-          )}
+          <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
+            Highlight
+          </button>
           <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
             Define
           </button>

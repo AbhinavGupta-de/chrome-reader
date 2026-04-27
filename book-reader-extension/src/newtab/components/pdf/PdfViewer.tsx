@@ -24,13 +24,15 @@ interface PdfViewerProps {
   ) => void;
   hasExplain?: boolean;
   aiAvailable?: boolean;
+  highlights?: import("../../lib/highlights/types").Highlight[];
+  onHighlightClick?: (id: string, rect: DOMRect) => void;
 }
 
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.05;
 
-export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onPositionChange, onSelectionAction, hasExplain = false, aiAvailable = false }: PdfViewerProps) {
+export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onPositionChange, onSelectionAction, hasExplain = false, aiAvailable = false, highlights = [], onHighlightClick }: PdfViewerProps) {
   const { pdfDoc, totalPages, loading, error } = usePdfDocument(bookHash);
 
   const startPage = Math.max(1, initialPage);
@@ -197,6 +199,8 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
     colorMode,
     onPageChange: handlePageChange,
     initialScrollOffset,
+    highlights,
+    onHighlightClick,
   };
 
   return (

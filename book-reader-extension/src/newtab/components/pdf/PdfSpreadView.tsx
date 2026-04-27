@@ -10,6 +10,8 @@ interface PdfSpreadViewProps {
   colorMode: PdfColorMode;
   onPageChange: (page: number, scrollRatio: number) => void;
   initialScrollOffset: number;
+  highlights?: import("../../lib/highlights/types").Highlight[];
+  onHighlightClick?: (id: string, rect: DOMRect) => void;
 }
 
 interface SpreadRow {
@@ -43,6 +45,8 @@ export default function PdfSpreadView({
   colorMode,
   onPageChange,
   initialScrollOffset,
+  highlights = [],
+  onHighlightClick,
 }: PdfSpreadViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [visibleRows, setVisibleRows] = useState<Set<number>>(() => new Set([0]));
@@ -296,6 +300,8 @@ export default function PdfSpreadView({
                       zoom={zoom}
                       colorMode={colorMode}
                       maxWidth={singlePageWidth}
+                      highlights={highlights}
+                      onHighlightClick={onHighlightClick}
                     />
                   ))}
               </div>

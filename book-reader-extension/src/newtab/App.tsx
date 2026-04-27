@@ -122,13 +122,32 @@ export default function App() {
       }
       if (action === "highlight") {
         if (!currentBook) return;
+        const color = p.color ?? "yellow";
+
+        if (currentBook.format === "pdf") {
+          const node = p.range.commonAncestorContainer;
+          const startNode = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+          if (!startNode) return;
+          const pageWrapper = startNode.closest("[data-page]") as HTMLElement | null;
+          if (!pageWrapper) return;
+          const textLayer = pageWrapper.querySelector(".textLayer") as HTMLElement | null;
+          if (!textLayer) return;
+          const pageIndex = Number(pageWrapper.getAttribute("data-page")) - 1;
+          const pageText = textLayer.textContent ?? "";
+          const offs = offsetsFromRange(textLayer, p.range);
+          if (!offs) return;
+          const anchor = buildAnchor(pageText, offs.startOffset, offs.length, pageIndex);
+          highlights.create(p.text, color, anchor);
+          window.getSelection()?.removeAllRanges();
+          return;
+        }
+
         const proseEl = (p.range.commonAncestorContainer.parentElement?.closest(".prose-reader")
           ?? document.querySelector(".prose-reader")) as HTMLElement | null;
         if (!proseEl) return;
         const offs = offsetsFromRange(proseEl, p.range);
         if (!offs) return;
         const anchor = buildAnchor(p.chapterText, offs.startOffset, offs.length, p.chapterIndex);
-        const color = (p.color ?? "yellow");
         highlights.create(p.text, color, anchor);
         window.getSelection()?.removeAllRanges();
         return;

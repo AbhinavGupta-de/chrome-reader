@@ -167,6 +167,8 @@ export default function Reader({
         onSelectionAction={onSelectionAction}
         hasExplain={hasExplain}
         aiAvailable={aiAvailable}
+        highlights={highlights}
+        onHighlightClick={onHighlightClick}
       />
     );
   }
