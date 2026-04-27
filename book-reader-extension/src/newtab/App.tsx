@@ -4,12 +4,14 @@ import Library from "./components/Library";
 import AIPanel from "./components/AIPanel";
 import ProgressBar from "./components/ProgressBar";
 import Settings from "./components/Settings";
+import DictionaryPopup from "./components/popups/DictionaryPopup";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
 import { useAuth } from "./hooks/useAuth";
 import { useAI } from "./hooks/useAI";
 import { getSettings, saveSettings, ReaderSettings, DEFAULT_SETTINGS } from "./lib/storage";
+import { defineWord, DictEntry } from "./lib/dictionary";
 
 export default function App() {
   const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
@@ -20,6 +22,12 @@ export default function App() {
   const [showAI, setShowAI] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [toolbarHover, setToolbarHover] = useState(false);
+  const [dict, setDict] = useState<{
+    loading: boolean;
+    entry: DictEntry | null;
+    notFoundWord: string | null;
+    rect: DOMRect;
+  } | null>(null);
 
   const { position, updatePosition } = usePosition({
     bookHash: currentBook?.hash ?? null,
@@ -56,6 +64,18 @@ export default function App() {
       }
       if (action === "explain") {
         setShowAI(true);
+        return;
+      }
+      if (action === "define") {
+        setDict({ loading: true, entry: null, notFoundWord: null, rect: p.rect });
+        defineWord(p.text).then((entry) => {
+          setDict({
+            loading: false,
+            entry,
+            notFoundWord: entry ? null : p.text.split(/\s+/)[0] ?? p.text,
+            rect: p.rect,
+          });
+        });
         return;
       }
       // dictionary / translate / highlight handled in later tasks
@@ -247,6 +267,15 @@ export default function App() {
 
       {showLibrary && (
         <Library books={library} currentHash={currentBook?.hash ?? null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
+      )}
+      {dict && (
+        <DictionaryPopup
+          loading={dict.loading}
+          entry={dict.entry}
+          notFoundWord={dict.notFoundWord}
+          rect={dict.rect}
+          onClose={() => setDict(null)}
+        />
       )}
       {showSettings && (
         <Settings settings={settings} onChange={handleSettingsChange} onClose={() => setShowSettings(false)} isPdf={currentBook?.format === "pdf"} />
