@@ -2,13 +2,19 @@ import React, { useRef, useEffect, useCallback, useMemo, useState } from "react"
 import { LoadedBook } from "../hooks/useBook";
 import { ReadingPosition, ReaderSettings } from "../lib/storage";
 import PdfViewer from "./pdf/PdfViewer";
+import { useSelection } from "../hooks/useSelection";
+import SelectionToolbar, { ToolbarAction, HighlightColor } from "./SelectionToolbar";
 
 interface ReaderProps {
   book: LoadedBook;
   position: ReadingPosition | null;
   settings: ReaderSettings;
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
-  onTextSelect: (text: string, context: string) => void;
+  onSelectionAction: (
+    action: ToolbarAction,
+    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }
+  ) => void;
+  hasExplain: boolean;
 }
 
 function estimateReadingTime(text: string): number {
@@ -27,30 +33,11 @@ function cleanChapterLabel(label: string): string {
   return label.trim();
 }
 
-export default function Reader({ book, position, settings, onPositionChange, onTextSelect }: ReaderProps) {
+export default function Reader({ book, position, settings, onPositionChange, onSelectionAction, hasExplain }: ReaderProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef = useRef(false);
   const [showNav, setShowNav] = useState(false);
-
-  if (book.format === "pdf") {
-    if (!position) {
-      return (
-        <div className="flex flex-col h-full bg-cream items-center justify-center">
-          <div className="w-6 h-6 border-2 border-clay-black border-t-transparent rounded-full animate-spin" />
-        </div>
-      );
-    }
-    return (
-      <PdfViewer
-        bookHash={book.hash}
-        initialPage={position.chapterIndex + 1}
-        initialScrollOffset={position.scrollOffset}
-        settings={settings}
-        onPositionChange={onPositionChange}
-      />
-    );
-  }
 
   const chapterIndex = position?.chapterIndex ?? 0;
 
@@ -106,12 +93,25 @@ export default function Reader({ book, position, settings, onPositionChange, onT
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [totalSections, onPositionChange]);
 
-  const handleMouseUp = useCallback(() => {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) return;
-    const text = sel.toString().trim();
-    if (text.length > 0) onTextSelect(text, plainText.slice(0, 2000));
-  }, [plainText, onTextSelect]);
+  const selection = useSelection(contentRef.current);
+
+  const dispatchAction = useCallback(
+    (action: ToolbarAction, payload?: { color?: HighlightColor }) => {
+      if (!selection) return;
+      onSelectionAction(action, {
+        text: selection.text,
+        range: selection.range,
+        rect: selection.rect,
+        color: payload?.color,
+        chapterIndex,
+        chapterText: plainText,
+      });
+      if (action !== "highlight") {
+        window.getSelection()?.removeAllRanges();
+      }
+    },
+    [selection, onSelectionAction, chapterIndex, plainText]
+  );
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -122,6 +122,25 @@ export default function Reader({ book, position, settings, onPositionChange, onT
     return () => window.removeEventListener("keydown", handler);
   }, [chapterIndex, goToChapter]);
 
+  if (book.format === "pdf") {
+    if (!position) {
+      return (
+        <div className="flex flex-col h-full bg-cream items-center justify-center">
+          <div className="w-6 h-6 border-2 border-clay-black border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+    return (
+      <PdfViewer
+        bookHash={book.hash}
+        initialPage={position.chapterIndex + 1}
+        initialScrollOffset={position.scrollOffset}
+        settings={settings}
+        onPositionChange={onPositionChange}
+      />
+    );
+  }
+
   const hasPrev = chapterIndex > 0;
   const hasNext = chapterIndex < totalSections - 1;
   const displayLabel = cleanChapterLabel(chapterLabel) || `Chapter ${chapterIndex + 1}`;
@@ -131,7 +150,6 @@ export default function Reader({ book, position, settings, onPositionChange, onT
       <div
         ref={contentRef}
         onScroll={handleScroll}
-        onMouseUp={handleMouseUp}
         className="flex-1 overflow-y-auto"
         style={{ fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight, fontFamily: settings.fontFamily }}
       >
@@ -222,6 +240,10 @@ export default function Reader({ book, position, settings, onPositionChange, onT
           )}
         </div>
       </div>
+
+      {selection && (
+        <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} onAction={dispatchAction} />
+      )}
     </div>
   );
 }

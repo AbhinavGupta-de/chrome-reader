@@ -45,7 +45,22 @@ export default function App() {
     [updatePosition]
   );
 
-  const handleTextSelect = useCallback((text: string, _context: string) => { setSelectedText(text); }, []);
+  const handleSelectionAction = useCallback(
+    (action: import("./components/SelectionToolbar").ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: import("./components/SelectionToolbar").HighlightColor; chapterIndex: number; chapterText: string }) => {
+      setSelectedText(p.text); // keep AIPanel "Explain" working
+      if (action === "search") {
+        const url = `https://www.google.com/search?q=${encodeURIComponent(p.text)}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      if (action === "explain") {
+        setShowAI(true);
+        return;
+      }
+      // dictionary / translate / highlight handled in later tasks
+    },
+    []
+  );
 
   const getCurrentChapterText = useCallback((): string => {
     if (!currentBook || !position) return "";
@@ -207,7 +222,8 @@ export default function App() {
               position={position}
               settings={settings}
               onPositionChange={handlePositionChange}
-              onTextSelect={handleTextSelect}
+              onSelectionAction={handleSelectionAction}
+              hasExplain={ai.available}
             />
           </div>
         )}
