@@ -47,3 +47,29 @@ export const aiCache = pgTable("ai_cache", {
   response: jsonb("response").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const highlights = pgTable(
+  "highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    clientId: text("client_id").notNull(),       // uuid from client (idempotency)
+    bookHash: text("book_hash").notNull(),
+    chapterIndex: integer("chapter_index").notNull(),
+    startOffset: integer("start_offset").notNull(),
+    length: integer("length").notNull(),
+    contextBefore: text("context_before").notNull().default(""),
+    contextAfter: text("context_after").notNull().default(""),
+    text: text("text").notNull(),
+    color: text("color").notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [
+    uniqueIndex("user_client_id_idx").on(table.userId, table.clientId),
+  ]
+);

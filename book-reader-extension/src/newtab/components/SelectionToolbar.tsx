@@ -1,4 +1,7 @@
 import React from "react";
+import { HighlightColor } from "../lib/highlights/types";
+
+export type { HighlightColor };
 
 export type ToolbarAction = "highlight" | "define" | "translate" | "search" | "explain";
 
@@ -7,8 +10,6 @@ interface Props {
   hasExplain: boolean;
   onAction: (action: ToolbarAction, payload?: { color?: HighlightColor }) => void;
 }
-
-export type HighlightColor = "yellow" | "green" | "pink" | "blue";
 
 const COLOR_SWATCH: Record<HighlightColor, string> = {
   yellow: "#fde68a",
