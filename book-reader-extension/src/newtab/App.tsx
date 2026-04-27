@@ -7,6 +7,7 @@ import Settings from "./components/Settings";
 import DictionaryPopup from "./components/popups/DictionaryPopup";
 import TranslatePopup from "./components/popups/TranslatePopup";
 import HighlightEditPopup from "./components/popups/HighlightEditPopup";
+import HighlightsPanel from "./components/HighlightsPanel";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
@@ -25,6 +26,7 @@ export default function App() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [toolbarHover, setToolbarHover] = useState(false);
   const [dict, setDict] = useState<{
@@ -254,6 +256,12 @@ export default function App() {
               >
                 AI {!ai.available && <span className="text-silver">*</span>}
               </button>
+              <button
+                onClick={() => setShowHighlights(!showHighlights)}
+                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showHighlights ? "clay-btn-solid" : "clay-btn-white"}`}
+              >
+                Highlights
+              </button>
               <button onClick={() => setShowSettings(true)} className="clay-btn-white text-xs !py-1.5 !px-3 !rounded-[12px]">
                 Settings
               </button>
@@ -306,6 +314,14 @@ export default function App() {
             available={ai.available}
             onSignIn={signIn}
             onClose={() => setShowAI(false)}
+          />
+        )}
+
+        {showHighlights && currentBook && (
+          <HighlightsPanel
+            items={highlights.items}
+            onJump={(h) => handlePositionChange(h.anchor.chapterIndex, 0, 0)}
+            onClose={() => setShowHighlights(false)}
           />
         )}
       </div>
