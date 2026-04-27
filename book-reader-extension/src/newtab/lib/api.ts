@@ -136,3 +136,14 @@ export async function aiExplain(
     body: JSON.stringify({ bookHash, selection, context }),
   });
 }
+
+export async function aiTranslate(
+  bookHash: string,
+  text: string,
+  targetLang: string
+): Promise<{ translation: string; detectedLang?: string }> {
+  return request("/ai/translate", {
+    method: "POST",
+    body: JSON.stringify({ bookHash, text, targetLang }),
+  });
+}

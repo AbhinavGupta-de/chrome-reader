@@ -124,6 +124,7 @@ export interface ReaderSettings {
   fontSize: number;
   lineHeight: number;
   fontFamily: string;
+  translateTo: string;
   pinToolbar: boolean;
   pdfViewMode: PdfViewMode;
   pdfColorMode: PdfColorMode;
@@ -141,6 +142,7 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
   fontSize: 18,
   lineHeight: 1.8,
   fontFamily: "'DM Sans', Arial, sans-serif",
+  translateTo: "en",
   pinToolbar: false,
   pdfViewMode: "continuous",
   pdfColorMode: "normal",

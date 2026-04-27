@@ -222,6 +222,26 @@ export default function Settings({ settings, onChange, onClose, isPdf }: Setting
                   value={settings.pinToolbar}
                   onChange={() => update({ pinToolbar: !settings.pinToolbar })}
                 />
+
+                <div>
+                  <p className="clay-label mb-2">Translate to</p>
+                  <select
+                    value={settings.translateTo}
+                    onChange={(e) => update({ translateTo: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-[8px] border border-oat bg-clay-white text-clay-black"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ja">Japanese</option>
+                    <option value="zh">Chinese</option>
+                    <option value="ar">Arabic</option>
+                  </select>
+                </div>
               </div>
             )}
 
