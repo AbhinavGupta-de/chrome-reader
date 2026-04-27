@@ -3,6 +3,7 @@ import {
   markSynced,
   putHighlight,
   listHighlights,
+  getHighlight,
 } from "./storage";
 import { Highlight } from "./types";
 import {
@@ -33,7 +34,8 @@ export async function pushPendingHighlights(): Promise<void> {
         });
       }
       await markSynced(h.id, Date.now());
-    } catch {
+    } catch (e) {
+      console.warn("highlight sync failed", h.id, e);
       // leave unsynced; will retry next cycle
     }
   }
@@ -44,6 +46,7 @@ export async function pullHighlightsForBook(bookHash: string): Promise<Highlight
   try {
     const remote = await listRemoteHighlights(bookHash);
     for (const r of remote) {
+      const remoteUpdated = new Date(r.updatedAt).getTime();
       const local: Highlight = {
         id: r.clientId,
         bookHash: r.bookHash,
@@ -57,13 +60,21 @@ export async function pullHighlightsForBook(bookHash: string): Promise<Highlight
         text: r.text,
         color: r.color as Highlight["color"],
         note: r.note ?? undefined,
-        createdAt: new Date(r.updatedAt).getTime(),
-        updatedAt: new Date(r.updatedAt).getTime(),
+        createdAt: remoteUpdated,
+        updatedAt: remoteUpdated,
         syncedAt: Date.now(),
       };
+      const existing = await getHighlight(r.clientId);
+      if (existing) {
+        const isLocallyDirty = !existing.syncedAt || existing.syncedAt < existing.updatedAt;
+        if (isLocallyDirty && existing.updatedAt > remoteUpdated) {
+          continue; // local has unsynced newer edits, skip remote overwrite
+        }
+      }
       await putHighlight(local);
     }
-  } catch {
+  } catch (e) {
+    console.warn("highlight pull failed", e);
     // ignore; fall through to local
   }
   return listHighlights(bookHash);

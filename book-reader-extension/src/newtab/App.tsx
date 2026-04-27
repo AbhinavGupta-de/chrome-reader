@@ -110,10 +110,6 @@ export default function App() {
       }
       if (action === "translate") {
         if (!currentBook) return;
-        if (!ai.available) {
-          setTranslate({ loading: false, source: p.text, translation: null, error: "Sign in to translate", targetLang: settings.translateTo, rect: p.rect });
-          return;
-        }
         setTranslate({ loading: true, source: p.text, translation: null, error: null, targetLang: settings.translateTo, rect: p.rect });
         aiTranslate(currentBook.hash, p.text, settings.translateTo)
           .then((r) =>

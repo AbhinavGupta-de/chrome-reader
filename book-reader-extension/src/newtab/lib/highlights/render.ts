@@ -43,8 +43,8 @@ export function renderHighlights(
         onClick(h.id, mark.getBoundingClientRect());
       });
       range.surroundContents(mark);
-    } catch {
-      // surroundContents fails when range crosses element boundaries; skip those
+    } catch (e) {
+      console.debug("highlight skipped (cross-element)", h.id, e);
     }
   }
 }

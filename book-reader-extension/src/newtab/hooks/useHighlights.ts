@@ -4,6 +4,7 @@ import {
   listHighlights,
   putHighlight,
   deleteHighlight,
+  getHighlight,
 } from "../lib/highlights/storage";
 import { pullHighlightsForBook, pushPendingHighlights } from "../lib/highlights/sync";
 
@@ -49,14 +50,14 @@ export function useHighlights(bookHash: string | null) {
 
   const update = useCallback(
     async (id: string, patch: Partial<Pick<Highlight, "color" | "note">>) => {
-      const found = items.find((x) => x.id === id);
+      const found = await getHighlight(id);
       if (!found) return;
       const updated: Highlight = { ...found, ...patch, updatedAt: Date.now(), syncedAt: undefined };
       await putHighlight(updated);
       await refresh();
       scheduleSync();
     },
-    [items, refresh, scheduleSync]
+    [refresh, scheduleSync]
   );
 
   const remove = useCallback(

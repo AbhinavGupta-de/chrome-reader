@@ -22,7 +22,6 @@ export function resolveAnchor(
   anchor: Pick<HighlightAnchor, "startOffset" | "length" | "contextBefore" | "contextAfter">
 ): { startOffset: number; length: number } | null {
   // Try direct offset match first.
-  const at = plainText.slice(anchor.startOffset, anchor.startOffset + anchor.length);
   const before = plainText.slice(Math.max(0, anchor.startOffset - CTX), anchor.startOffset);
   if (before.endsWith(anchor.contextBefore.slice(-Math.min(CTX, anchor.contextBefore.length)))) {
     return { startOffset: anchor.startOffset, length: anchor.length };
@@ -45,7 +44,6 @@ export function resolveAnchor(
     if (probe.length === 0) return null;
     from = idx + 1;
   }
-  void at;
   return null;
 }
 
