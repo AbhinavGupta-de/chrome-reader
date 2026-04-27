@@ -14,6 +14,8 @@ import { useAI } from "./hooks/useAI";
 import { getSettings, saveSettings, ReaderSettings, DEFAULT_SETTINGS } from "./lib/storage";
 import { defineWord, DictEntry } from "./lib/dictionary";
 import { aiTranslate } from "./lib/api";
+import { useHighlights } from "./hooks/useHighlights";
+import { buildAnchor, offsetsFromRange } from "./lib/highlights/anchor";
 
 export default function App() {
   const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
@@ -46,6 +48,8 @@ export default function App() {
   });
 
   const ai = useAI(currentBook?.hash ?? null);
+  const highlights = useHighlights(currentBook?.hash ?? null);
+  const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(null);
 
   useEffect(() => { getSettings().then(setSettings); }, []);
 
@@ -104,9 +108,21 @@ export default function App() {
           );
         return;
       }
-      // dictionary / translate / highlight handled in later tasks
+      if (action === "highlight") {
+        if (!currentBook) return;
+        const proseEl = (p.range.commonAncestorContainer.parentElement?.closest(".prose-reader")
+          ?? document.querySelector(".prose-reader")) as HTMLElement | null;
+        if (!proseEl) return;
+        const offs = offsetsFromRange(proseEl, p.range);
+        if (!offs) return;
+        const anchor = buildAnchor(p.chapterText, offs.startOffset, offs.length, p.chapterIndex);
+        const color = (p.color ?? "yellow");
+        highlights.create(p.text, color, anchor);
+        window.getSelection()?.removeAllRanges();
+        return;
+      }
     },
-    [currentBook, ai.available, settings.translateTo]
+    [currentBook, ai.available, settings.translateTo, highlights.create]
   );
 
   const getCurrentChapterText = useCallback((): string => {
@@ -268,8 +284,10 @@ export default function App() {
               book={currentBook}
               position={position}
               settings={settings}
+              highlights={highlights.items}
               onPositionChange={handlePositionChange}
               onSelectionAction={handleSelectionAction}
+              onHighlightClick={(id, rect) => setEditing({ id, rect })}
               hasExplain={ai.available}
             />
           </div>

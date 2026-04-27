@@ -4,16 +4,20 @@ import { ReadingPosition, ReaderSettings } from "../lib/storage";
 import PdfViewer from "./pdf/PdfViewer";
 import { useSelection } from "../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "./SelectionToolbar";
+import { Highlight } from "../lib/highlights/types";
+import { renderHighlights, clearHighlights } from "../lib/highlights/render";
 
 interface ReaderProps {
   book: LoadedBook;
   position: ReadingPosition | null;
   settings: ReaderSettings;
+  highlights: Highlight[];
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction: (
     action: ToolbarAction,
     payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }
   ) => void;
+  onHighlightClick: (id: string, rect: DOMRect) => void;
   hasExplain: boolean;
 }
 
@@ -33,8 +37,11 @@ function cleanChapterLabel(label: string): string {
   return label.trim();
 }
 
-export default function Reader({ book, position, settings, onPositionChange, onSelectionAction, hasExplain }: ReaderProps) {
+export default function Reader({
+  book, position, settings, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain,
+}: ReaderProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const proseRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef = useRef(false);
   const [showNav, setShowNav] = useState(false);
@@ -72,6 +79,20 @@ export default function Reader({ book, position, settings, onPositionChange, onS
   }, [content, position]);
 
   useEffect(() => { restoredRef.current = false; }, [chapterIndex]);
+
+  useEffect(() => {
+    if (book.format === "pdf") return;
+    const el = proseRef.current;
+    if (!el) return;
+    const handle = requestAnimationFrame(() => {
+      if (!proseRef.current) return;
+      renderHighlights(proseRef.current, plainText, chapterIndex, highlights, onHighlightClick);
+    });
+    return () => {
+      cancelAnimationFrame(handle);
+      if (proseRef.current) clearHighlights(proseRef.current);
+    };
+  }, [content, highlights, plainText, chapterIndex, book.format, onHighlightClick]);
 
   const handleScroll = useCallback(() => {
     if (!contentRef.current) return;
@@ -159,7 +180,7 @@ export default function Reader({ book, position, settings, onPositionChange, onS
         </div>
 
         <div className="max-w-2xl mx-auto px-6 pb-28">
-          <div className="prose-reader" dangerouslySetInnerHTML={{ __html: content }} />
+          <div ref={proseRef} className="prose-reader" dangerouslySetInnerHTML={{ __html: content }} />
         </div>
 
         {content && (
