@@ -6,6 +6,8 @@ import PdfSingleView from "./PdfSingleView";
 import PdfContinuousView from "./PdfContinuousView";
 import PdfSpreadView from "./PdfSpreadView";
 import { ReaderSettings, saveSettings } from "../../lib/storage";
+import { useSelection } from "../../hooks/useSelection";
+import SelectionToolbar, { ToolbarAction, HighlightColor } from "../SelectionToolbar";
 
 export type PdfViewMode = "single" | "continuous" | "spread";
 export type PdfColorMode = "normal" | "dark" | "sepia";
@@ -16,13 +18,19 @@ interface PdfViewerProps {
   initialScrollOffset: number;
   settings: ReaderSettings;
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
+  onSelectionAction?: (
+    action: ToolbarAction,
+    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }
+  ) => void;
+  hasExplain?: boolean;
+  aiAvailable?: boolean;
 }
 
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.05;
 
-export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onPositionChange }: PdfViewerProps) {
+export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onPositionChange, onSelectionAction, hasExplain = false, aiAvailable = false }: PdfViewerProps) {
   const { pdfDoc, totalPages, loading, error } = usePdfDocument(bookHash);
 
   const startPage = Math.max(1, initialPage);
@@ -33,6 +41,11 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
   const [showThumbnails, setShowThumbnails] = useState(settings.pdfShowThumbnails ?? false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  const attachContainerRef = useCallback((el: HTMLDivElement | null) => {
+    containerRef.current = el;
+    setContainerEl(el);
+  }, []);
   const currentPageRef = useRef(startPage);
   const currentScrollRatioRef = useRef(initialScrollOffset);
   const settingsRef = useRef(settings);
@@ -99,6 +112,26 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
       return next;
     });
   }, []);
+
+  const selection = useSelection(containerEl);
+
+  const dispatchAction = useCallback(
+    (action: ToolbarAction, _payload?: { color?: HighlightColor }) => {
+      if (!selection || !onSelectionAction) return;
+      onSelectionAction(action, {
+        text: selection.text,
+        range: selection.range,
+        rect: selection.rect,
+        color: undefined,
+        chapterIndex: currentPageRef.current - 1,
+        chapterText: "",
+      });
+      if (action !== "highlight") {
+        window.getSelection()?.removeAllRanges();
+      }
+    },
+    [selection, onSelectionAction]
+  );
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -167,7 +200,7 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full bg-cream">
+    <div ref={attachContainerRef} className="flex flex-col h-full bg-cream">
       <PdfToolbar
         currentPage={currentPage}
         totalPages={totalPages}
@@ -204,6 +237,16 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
         {viewMode === "continuous" && <PdfContinuousView {...viewProps} />}
         {viewMode === "spread" && <PdfSpreadView {...viewProps} />}
       </div>
+
+      {selection && (
+        <SelectionToolbar
+          rect={selection.rect}
+          hasExplain={hasExplain}
+          aiAvailable={aiAvailable}
+          isPdf={true}
+          onAction={dispatchAction}
+        />
+      )}
     </div>
   );
 }

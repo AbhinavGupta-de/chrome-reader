@@ -164,6 +164,9 @@ export default function Reader({
         initialScrollOffset={position.scrollOffset}
         settings={settings}
         onPositionChange={onPositionChange}
+        onSelectionAction={onSelectionAction}
+        hasExplain={hasExplain}
+        aiAvailable={aiAvailable}
       />
     );
   }

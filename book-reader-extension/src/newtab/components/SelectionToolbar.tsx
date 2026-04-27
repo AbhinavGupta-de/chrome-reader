@@ -9,6 +9,7 @@ interface Props {
   rect: DOMRect;
   hasExplain: boolean;
   aiAvailable: boolean;
+  isPdf?: boolean;
   onAction: (action: ToolbarAction, payload?: { color?: HighlightColor }) => void;
 }
 
@@ -19,7 +20,7 @@ const COLOR_SWATCH: Record<HighlightColor, string> = {
   blue: "#bfdbfe",
 };
 
-export default function SelectionToolbar({ rect, hasExplain, aiAvailable, onAction }: Props) {
+export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf, onAction }: Props) {
   const top = Math.max(rect.top - 48, 8);
   const left = rect.left + rect.width / 2;
   const [showColors, setShowColors] = React.useState(false);
@@ -53,9 +54,11 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, onActi
         </>
       ) : (
         <>
-          <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
-            Highlight
-          </button>
+          {!isPdf && (
+            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
+              Highlight
+            </button>
+          )}
           <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
             Define
           </button>
