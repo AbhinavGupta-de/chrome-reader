@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { usePdfDocument } from "./usePdfDocument";
 import PdfToolbar from "./PdfToolbar";
 import PdfThumbnails from "./PdfThumbnails";
@@ -8,6 +8,7 @@ import PdfSpreadView from "./PdfSpreadView";
 import { ReaderSettings, saveSettings } from "../../lib/storage";
 import { useSelection } from "../../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "../SelectionToolbar";
+import { findOverlappingHighlights, offsetsFromRange } from "../../lib/highlights/anchor";
 
 export type PdfViewMode = "single" | "continuous" | "spread";
 export type PdfColorMode = "normal" | "dark" | "sepia";
@@ -20,7 +21,7 @@ interface PdfViewerProps {
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction?: (
     action: ToolbarAction,
-    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }
+    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }
   ) => void;
   hasExplain?: boolean;
   aiAvailable?: boolean;
@@ -117,14 +118,30 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
 
   const selection = useSelection(containerEl);
 
+  const overlappingHighlightIds = useMemo(() => {
+    if (!selection) return [];
+    const node = selection.range.commonAncestorContainer;
+    const startNode = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!startNode) return [];
+    const pageWrapper = startNode.closest("[data-page]") as HTMLElement | null;
+    if (!pageWrapper) return [];
+    const textLayer = pageWrapper.querySelector(".textLayer") as HTMLElement | null;
+    if (!textLayer) return [];
+    const pageIndex = Number(pageWrapper.getAttribute("data-page")) - 1;
+    const offs = offsetsFromRange(textLayer, selection.range);
+    if (!offs) return [];
+    return findOverlappingHighlights(highlights, pageIndex, offs.startOffset, offs.length);
+  }, [selection, highlights]);
+
   const dispatchAction = useCallback(
-    (action: ToolbarAction, payload?: { color?: HighlightColor }) => {
+    (action: ToolbarAction, payload?: { color?: HighlightColor; highlightIds?: string[] }) => {
       if (!selection || !onSelectionAction) return;
       onSelectionAction(action, {
         text: selection.text,
         range: selection.range,
         rect: selection.rect,
         color: payload?.color,
+        highlightIds: payload?.highlightIds,
         chapterIndex: currentPageRef.current - 1,
         chapterText: "",
       });
@@ -244,6 +261,7 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
 
       {selection && (
         <SelectionToolbar
+          overlappingHighlightIds={overlappingHighlightIds}
           rect={selection.rect}
           hasExplain={hasExplain}
           aiAvailable={aiAvailable}

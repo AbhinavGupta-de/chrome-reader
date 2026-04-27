@@ -6,6 +6,7 @@ import { useSelection } from "../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "./SelectionToolbar";
 import { Highlight } from "../lib/highlights/types";
 import { renderHighlights, clearHighlights } from "../lib/highlights/render";
+import { findOverlappingHighlights, offsetsFromRange } from "../lib/highlights/anchor";
 
 interface ReaderProps {
   book: LoadedBook;
@@ -15,7 +16,7 @@ interface ReaderProps {
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction: (
     action: ToolbarAction,
-    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }
+    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }
   ) => void;
   onHighlightClick: (id: string, rect: DOMRect) => void;
   hasExplain: boolean;
@@ -122,14 +123,22 @@ export default function Reader({
 
   const selection = useSelection(contentEl);
 
+  const overlappingHighlightIds = useMemo(() => {
+    if (!selection || !proseRef.current) return [];
+    const offs = offsetsFromRange(proseRef.current, selection.range);
+    if (!offs) return [];
+    return findOverlappingHighlights(highlights, chapterIndex, offs.startOffset, offs.length);
+  }, [selection, highlights, chapterIndex]);
+
   const dispatchAction = useCallback(
-    (action: ToolbarAction, payload?: { color?: HighlightColor }) => {
+    (action: ToolbarAction, payload?: { color?: HighlightColor; highlightIds?: string[] }) => {
       if (!selection) return;
       onSelectionAction(action, {
         text: selection.text,
         range: selection.range,
         rect: selection.rect,
         color: payload?.color,
+        highlightIds: payload?.highlightIds,
         chapterIndex,
         chapterText: plainText,
       });
@@ -274,7 +283,7 @@ export default function Reader({
       </div>
 
       {selection && (
-        <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} aiAvailable={aiAvailable} onAction={dispatchAction} />
+        <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} aiAvailable={aiAvailable} overlappingHighlightIds={overlappingHighlightIds} onAction={dispatchAction} />
       )}
     </div>
   );

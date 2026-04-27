@@ -1,4 +1,22 @@
-import { HighlightAnchor } from "./types";
+import { Highlight, HighlightAnchor } from "./types";
+
+export function findOverlappingHighlights(
+  highlights: Highlight[],
+  chapterIndex: number,
+  selectionStart: number,
+  selectionLength: number
+): string[] {
+  const selEnd = selectionStart + selectionLength;
+  return highlights
+    .filter((h) => h.anchor.chapterIndex === chapterIndex)
+    .filter((h) => {
+      const hStart = h.anchor.startOffset;
+      const hEnd = hStart + h.anchor.length;
+      return !(hEnd <= selectionStart || selEnd <= hStart);
+    })
+    .map((h) => h.id);
+}
+
 
 const CTX = 50;
 

@@ -3,14 +3,26 @@ import { HighlightColor } from "../lib/highlights/types";
 
 export type { HighlightColor };
 
-export type ToolbarAction = "highlight" | "define" | "translate" | "search" | "explain";
+export type ToolbarAction =
+  | "highlight"
+  | "remove_highlight"
+  | "define"
+  | "translate"
+  | "search"
+  | "explain";
+
+export interface ToolbarPayload {
+  color?: HighlightColor;
+  highlightIds?: string[];
+}
 
 interface Props {
   rect: DOMRect;
   hasExplain: boolean;
   aiAvailable: boolean;
   isPdf?: boolean;
-  onAction: (action: ToolbarAction, payload?: { color?: HighlightColor }) => void;
+  overlappingHighlightIds?: string[];
+  onAction: (action: ToolbarAction, payload?: ToolbarPayload) => void;
 }
 
 const COLOR_SWATCH: Record<HighlightColor, string> = {
@@ -20,10 +32,12 @@ const COLOR_SWATCH: Record<HighlightColor, string> = {
   blue: "#bfdbfe",
 };
 
-export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf, onAction }: Props) {
+export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf, overlappingHighlightIds, onAction }: Props) {
   const top = Math.max(rect.top - 48, 8);
   const left = rect.left + rect.width / 2;
   const [showColors, setShowColors] = React.useState(false);
+  const overlapping = overlappingHighlightIds ?? [];
+  const hasOverlap = overlapping.length > 0;
 
   return (
     <div
@@ -54,9 +68,22 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
         </>
       ) : (
         <>
-          <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
-            Highlight
-          </button>
+          {hasOverlap ? (
+            <button
+              className="text-xs !py-1 !px-2.5 clay-btn-white text-pomegranate-400 inline-flex items-center gap-1"
+              onClick={() => onAction("remove_highlight", { highlightIds: overlapping })}
+              title="Remove highlight"
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.5 9a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1L12 4" />
+              </svg>
+              Remove
+            </button>
+          ) : (
+            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
+              Highlight
+            </button>
+          )}
           <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
             Define
           </button>

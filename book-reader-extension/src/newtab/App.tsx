@@ -85,8 +85,14 @@ export default function App() {
   );
 
   const handleSelectionAction = useCallback(
-    (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }) => {
+    (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }) => {
       setSelectedText(p.text); // keep AIPanel "Explain" working
+      if (action === "remove_highlight") {
+        const ids = p.highlightIds ?? [];
+        for (const id of ids) highlights.remove(id);
+        window.getSelection()?.removeAllRanges();
+        return;
+      }
       if (action === "search") {
         const url = `https://www.google.com/search?q=${encodeURIComponent(p.text)}`;
         window.open(url, "_blank", "noopener,noreferrer");
@@ -153,7 +159,7 @@ export default function App() {
         return;
       }
     },
-    [currentBook, ai.available, settings.translateTo, highlights.create]
+    [currentBook, ai.available, settings.translateTo, highlights.create, highlights.remove]
   );
 
   const getCurrentChapterText = useCallback((): string => {
