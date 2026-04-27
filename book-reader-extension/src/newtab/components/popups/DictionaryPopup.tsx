@@ -1,5 +1,6 @@
 import React from "react";
 import { DictEntry } from "../../lib/dictionary";
+import { useDismissable } from "../../hooks/useClickOutside";
 
 interface Props {
   loading: boolean;
@@ -12,8 +13,10 @@ interface Props {
 export default function DictionaryPopup({ loading, entry, notFoundWord, rect, onClose }: Props) {
   const top = rect.bottom + 8;
   const left = rect.left;
+  const ref = useDismissable<HTMLDivElement>(true, onClose);
   return (
     <div
+      ref={ref}
       className="fixed z-50 clay-card !p-3 w-72 max-h-80 overflow-y-auto"
       style={{ top, left }}
     >

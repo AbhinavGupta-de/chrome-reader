@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Highlight, HighlightColor } from "../../lib/highlights/types";
+import { useDismissable } from "../../hooks/useClickOutside";
 
 const COLORS: HighlightColor[] = ["yellow", "green", "pink", "blue"];
 const SWATCH: Record<HighlightColor, string> = {
@@ -19,9 +20,13 @@ export default function HighlightEditPopup({ highlight, rect, onChangeColor, onC
   const top = rect.bottom + 6;
   const left = rect.left;
   const [note, setNote] = useState(highlight.note ?? "");
+  const ref = useDismissable<HTMLDivElement>(true, () => {
+    onChangeNote(note);
+    onClose();
+  });
 
   return (
-    <div className="fixed z-50 clay-card !p-3 w-72" style={{ top, left }}>
+    <div ref={ref} className="fixed z-50 clay-card !p-3 w-72" style={{ top, left }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex gap-1.5">
           {COLORS.map((c) => (

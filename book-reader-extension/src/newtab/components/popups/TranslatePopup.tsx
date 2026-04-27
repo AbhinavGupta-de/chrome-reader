@@ -1,4 +1,5 @@
 import React from "react";
+import { useDismissable } from "../../hooks/useClickOutside";
 
 interface Props {
   loading: boolean;
@@ -13,8 +14,9 @@ interface Props {
 export default function TranslatePopup({ loading, source, translation, error, targetLang, rect, onClose }: Props) {
   const top = rect.bottom + 8;
   const left = rect.left;
+  const ref = useDismissable<HTMLDivElement>(true, onClose);
   return (
-    <div className="fixed z-50 clay-card !p-3 w-80" style={{ top, left }}>
+    <div ref={ref} className="fixed z-50 clay-card !p-3 w-80" style={{ top, left }}>
       <div className="flex justify-between items-start mb-2">
         <p className="text-xs text-silver">→ {targetLang}</p>
         <button onClick={onClose} className="text-silver text-xs">✕</button>
