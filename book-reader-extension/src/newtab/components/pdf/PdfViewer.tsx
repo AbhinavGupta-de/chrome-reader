@@ -118,13 +118,13 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
   const selection = useSelection(containerEl);
 
   const dispatchAction = useCallback(
-    (action: ToolbarAction, _payload?: { color?: HighlightColor }) => {
+    (action: ToolbarAction, payload?: { color?: HighlightColor }) => {
       if (!selection || !onSelectionAction) return;
       onSelectionAction(action, {
         text: selection.text,
         range: selection.range,
         rect: selection.rect,
-        color: undefined,
+        color: payload?.color,
         chapterIndex: currentPageRef.current - 1,
         chapterText: "",
       });
