@@ -4,6 +4,7 @@ import Library from "./components/Library";
 import AIPanel from "./components/AIPanel";
 import ProgressBar from "./components/ProgressBar";
 import Settings from "./components/Settings";
+import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
 import { useAuth } from "./hooks/useAuth";
@@ -46,7 +47,7 @@ export default function App() {
   );
 
   const handleSelectionAction = useCallback(
-    (action: import("./components/SelectionToolbar").ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: import("./components/SelectionToolbar").HighlightColor; chapterIndex: number; chapterText: string }) => {
+    (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; chapterIndex: number; chapterText: string }) => {
       setSelectedText(p.text); // keep AIPanel "Explain" working
       if (action === "search") {
         const url = `https://www.google.com/search?q=${encodeURIComponent(p.text)}`;
