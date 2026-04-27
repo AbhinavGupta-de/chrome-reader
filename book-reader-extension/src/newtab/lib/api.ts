@@ -147,3 +147,48 @@ export async function aiTranslate(
     body: JSON.stringify({ bookHash, text, targetLang }),
   });
 }
+
+export interface RemoteHighlight {
+  id: string;
+  clientId: string;
+  bookHash: string;
+  chapterIndex: number;
+  startOffset: number;
+  length: number;
+  contextBefore: string;
+  contextAfter: string;
+  text: string;
+  color: string;
+  note: string | null;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export async function listRemoteHighlights(bookHash: string): Promise<RemoteHighlight[]> {
+  const r = await request<{ highlights: RemoteHighlight[] }>(`/highlights/${bookHash}`);
+  return r.highlights;
+}
+
+export async function putRemoteHighlight(
+  bookHash: string,
+  clientId: string,
+  body: {
+    chapterIndex: number;
+    startOffset: number;
+    length: number;
+    contextBefore: string;
+    contextAfter: string;
+    text: string;
+    color: string;
+    note?: string | null;
+  }
+): Promise<{ id: string; clientId: string }> {
+  return request(`/highlights/${bookHash}/${clientId}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteRemoteHighlight(bookHash: string, clientId: string): Promise<void> {
+  await request(`/highlights/${bookHash}/${clientId}`, { method: "DELETE" });
+}
