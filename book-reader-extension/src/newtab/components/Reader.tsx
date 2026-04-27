@@ -46,6 +46,11 @@ export default function Reader({
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoredRef = useRef(false);
   const [showNav, setShowNav] = useState(false);
+  const [contentEl, setContentEl] = useState<HTMLDivElement | null>(null);
+  const attachContentRef = useCallback((el: HTMLDivElement | null) => {
+    contentRef.current = el;
+    setContentEl(el);
+  }, []);
 
   const chapterIndex = position?.chapterIndex ?? 0;
 
@@ -115,7 +120,7 @@ export default function Reader({
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [totalSections, onPositionChange]);
 
-  const selection = useSelection(contentRef.current);
+  const selection = useSelection(contentEl);
 
   const dispatchAction = useCallback(
     (action: ToolbarAction, payload?: { color?: HighlightColor }) => {
@@ -170,7 +175,7 @@ export default function Reader({
   return (
     <div className="flex flex-col h-full bg-cream text-clay-black relative">
       <div
-        ref={contentRef}
+        ref={attachContentRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto"
         style={{ fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight, fontFamily: settings.fontFamily }}
