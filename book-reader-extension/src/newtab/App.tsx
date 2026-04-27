@@ -61,6 +61,19 @@ export default function App() {
     document.documentElement.classList.toggle("dark", settings.theme === "dark");
   }, [settings.theme]);
 
+  useEffect(() => {
+    if (!user || !currentBook?.hash) return;
+    highlights.refresh();
+  }, [user, currentBook?.hash]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      import("./lib/highlights/sync").then((m) => m.pushPendingHighlights());
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
+
   const handleSettingsChange = useCallback(async (s: ReaderSettings) => {
     setSettings(s);
     await saveSettings(s);
