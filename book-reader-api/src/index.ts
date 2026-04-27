@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import authRoutes from "./routes/auth.js";
 import positionRoutes from "./routes/position.js";
 import aiRoutes from "./routes/ai.js";
+import highlightRoutes from "./routes/highlights.js";
 
 const app = new Hono();
 
@@ -42,6 +43,7 @@ app.get("/health", (c) => {
 app.route("/auth", authRoutes);
 app.route("/position", positionRoutes);
 app.route("/ai", aiRoutes);
+app.route("/highlights", highlightRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 
