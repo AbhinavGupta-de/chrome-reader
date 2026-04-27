@@ -311,6 +311,7 @@ export default function App() {
               onSelectionAction={handleSelectionAction}
               onHighlightClick={(id, rect) => setEditing({ id, rect })}
               hasExplain={ai.available}
+              aiAvailable={ai.available}
             />
           </div>
         )}

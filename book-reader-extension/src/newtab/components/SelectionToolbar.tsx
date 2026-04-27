@@ -8,6 +8,7 @@ export type ToolbarAction = "highlight" | "define" | "translate" | "search" | "e
 interface Props {
   rect: DOMRect;
   hasExplain: boolean;
+  aiAvailable: boolean;
   onAction: (action: ToolbarAction, payload?: { color?: HighlightColor }) => void;
 }
 
@@ -18,7 +19,7 @@ const COLOR_SWATCH: Record<HighlightColor, string> = {
   blue: "#bfdbfe",
 };
 
-export default function SelectionToolbar({ rect, hasExplain, onAction }: Props) {
+export default function SelectionToolbar({ rect, hasExplain, aiAvailable, onAction }: Props) {
   const top = Math.max(window.scrollY + rect.top - 48, window.scrollY + 8);
   const left = window.scrollX + rect.left + rect.width / 2;
   const [showColors, setShowColors] = React.useState(false);
@@ -58,9 +59,11 @@ export default function SelectionToolbar({ rect, hasExplain, onAction }: Props) 
           <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
             Define
           </button>
-          <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("translate")}>
-            Translate
-          </button>
+          {aiAvailable && (
+            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("translate")}>
+              Translate
+            </button>
+          )}
           <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("search")}>
             Web
           </button>

@@ -19,6 +19,7 @@ interface ReaderProps {
   ) => void;
   onHighlightClick: (id: string, rect: DOMRect) => void;
   hasExplain: boolean;
+  aiAvailable: boolean;
 }
 
 function estimateReadingTime(text: string): number {
@@ -38,7 +39,7 @@ function cleanChapterLabel(label: string): string {
 }
 
 export default function Reader({
-  book, position, settings, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain,
+  book, position, settings, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain, aiAvailable,
 }: ReaderProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
@@ -263,7 +264,7 @@ export default function Reader({
       </div>
 
       {selection && (
-        <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} onAction={dispatchAction} />
+        <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} aiAvailable={aiAvailable} onAction={dispatchAction} />
       )}
     </div>
   );
