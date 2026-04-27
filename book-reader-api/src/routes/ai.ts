@@ -7,6 +7,7 @@ import {
   explainPassage,
   isAIAvailable,
 } from "../services/ai.js";
+import { translateText } from "../services/translate.js";
 import type { AppVariables } from "../types.js";
 
 const ai = new Hono<{ Variables: AppVariables }>();
@@ -106,6 +107,27 @@ ai.post("/explain", async (c) => {
     return c.json({ explanation });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Explanation failed";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+ai.post("/translate", async (c) => {
+  const userId = c.get("userId") as string;
+  const { bookHash, text, targetLang } = await c.req.json<{
+    bookHash: string;
+    text: string;
+    targetLang: string;
+  }>();
+
+  if (!bookHash || !text || !targetLang) {
+    return c.json({ error: "bookHash, text, and targetLang are required" }, 400);
+  }
+
+  try {
+    const result = await translateText(userId, bookHash, text, targetLang);
+    return c.json(result);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Translation failed";
     return c.json({ error: msg }, 500);
   }
 });

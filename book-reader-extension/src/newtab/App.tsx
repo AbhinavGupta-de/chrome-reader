@@ -4,11 +4,20 @@ import Library from "./components/Library";
 import AIPanel from "./components/AIPanel";
 import ProgressBar from "./components/ProgressBar";
 import Settings from "./components/Settings";
+import DictionaryPopup from "./components/popups/DictionaryPopup";
+import TranslatePopup from "./components/popups/TranslatePopup";
+import HighlightEditPopup from "./components/popups/HighlightEditPopup";
+import HighlightsPanel from "./components/HighlightsPanel";
+import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
 import { useAuth } from "./hooks/useAuth";
 import { useAI } from "./hooks/useAI";
 import { getSettings, saveSettings, ReaderSettings, DEFAULT_SETTINGS } from "./lib/storage";
+import { defineWord, DictEntry } from "./lib/dictionary";
+import { aiTranslate } from "./lib/api";
+import { useHighlights } from "./hooks/useHighlights";
+import { buildAnchor, offsetsFromRange } from "./lib/highlights/anchor";
 
 export default function App() {
   const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
@@ -17,8 +26,23 @@ export default function App() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showHighlights, setShowHighlights] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [toolbarHover, setToolbarHover] = useState(false);
+  const [dict, setDict] = useState<{
+    loading: boolean;
+    entry: DictEntry | null;
+    notFoundWord: string | null;
+    rect: DOMRect;
+  } | null>(null);
+  const [translate, setTranslate] = useState<{
+    loading: boolean;
+    source: string;
+    translation: string | null;
+    error: string | null;
+    targetLang: string;
+    rect: DOMRect;
+  } | null>(null);
 
   const { position, updatePosition } = usePosition({
     bookHash: currentBook?.hash ?? null,
@@ -27,6 +51,8 @@ export default function App() {
   });
 
   const ai = useAI(currentBook?.hash ?? null);
+  const highlights = useHighlights(currentBook?.hash ?? null);
+  const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(null);
 
   useEffect(() => { getSettings().then(setSettings); }, []);
 
@@ -34,6 +60,19 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", settings.theme === "dark");
   }, [settings.theme]);
+
+  useEffect(() => {
+    if (!user || !currentBook?.hash) return;
+    highlights.refresh();
+  }, [user, currentBook?.hash]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      import("./lib/highlights/sync").then((m) => m.pushPendingHighlights());
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   const handleSettingsChange = useCallback(async (s: ReaderSettings) => {
     setSettings(s);
@@ -45,7 +84,83 @@ export default function App() {
     [updatePosition]
   );
 
-  const handleTextSelect = useCallback((text: string, _context: string) => { setSelectedText(text); }, []);
+  const handleSelectionAction = useCallback(
+    (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }) => {
+      setSelectedText(p.text); // keep AIPanel "Explain" working
+      if (action === "remove_highlight") {
+        const ids = p.highlightIds ?? [];
+        for (const id of ids) highlights.remove(id);
+        window.getSelection()?.removeAllRanges();
+        return;
+      }
+      if (action === "search") {
+        const url = `https://www.google.com/search?q=${encodeURIComponent(p.text)}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      if (action === "explain") {
+        setShowAI(true);
+        return;
+      }
+      if (action === "define") {
+        setDict({ loading: true, entry: null, notFoundWord: null, rect: p.rect });
+        defineWord(p.text).then((entry) => {
+          setDict({
+            loading: false,
+            entry,
+            notFoundWord: entry ? null : p.text.split(/\s+/)[0] ?? p.text,
+            rect: p.rect,
+          });
+        });
+        return;
+      }
+      if (action === "translate") {
+        if (!currentBook) return;
+        setTranslate({ loading: true, source: p.text, translation: null, error: null, targetLang: settings.translateTo, rect: p.rect });
+        aiTranslate(currentBook.hash, p.text, settings.translateTo)
+          .then((r) =>
+            setTranslate({ loading: false, source: p.text, translation: r.translation, error: null, targetLang: settings.translateTo, rect: p.rect })
+          )
+          .catch((e) =>
+            setTranslate({ loading: false, source: p.text, translation: null, error: e instanceof Error ? e.message : "Failed", targetLang: settings.translateTo, rect: p.rect })
+          );
+        return;
+      }
+      if (action === "highlight") {
+        if (!currentBook) return;
+        const color = p.color ?? "yellow";
+
+        if (currentBook.format === "pdf") {
+          const node = p.range.commonAncestorContainer;
+          const startNode = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+          if (!startNode) return;
+          const pageWrapper = startNode.closest("[data-page]") as HTMLElement | null;
+          if (!pageWrapper) return;
+          const textLayer = pageWrapper.querySelector(".textLayer") as HTMLElement | null;
+          if (!textLayer) return;
+          const pageIndex = Number(pageWrapper.getAttribute("data-page")) - 1;
+          const pageText = textLayer.textContent ?? "";
+          const offs = offsetsFromRange(textLayer, p.range);
+          if (!offs) return;
+          const anchor = buildAnchor(pageText, offs.startOffset, offs.length, pageIndex);
+          highlights.create(p.text, color, anchor);
+          window.getSelection()?.removeAllRanges();
+          return;
+        }
+
+        const proseEl = (p.range.commonAncestorContainer.parentElement?.closest(".prose-reader")
+          ?? document.querySelector(".prose-reader")) as HTMLElement | null;
+        if (!proseEl) return;
+        const offs = offsetsFromRange(proseEl, p.range);
+        if (!offs) return;
+        const anchor = buildAnchor(p.chapterText, offs.startOffset, offs.length, p.chapterIndex);
+        highlights.create(p.text, color, anchor);
+        window.getSelection()?.removeAllRanges();
+        return;
+      }
+    },
+    [currentBook, ai.available, settings.translateTo, highlights.create, highlights.remove]
+  );
 
   const getCurrentChapterText = useCallback((): string => {
     if (!currentBook || !position) return "";
@@ -175,6 +290,12 @@ export default function App() {
               >
                 AI {!ai.available && <span className="text-silver">*</span>}
               </button>
+              <button
+                onClick={() => setShowHighlights(!showHighlights)}
+                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showHighlights ? "clay-btn-solid" : "clay-btn-white"}`}
+              >
+                Highlights
+              </button>
               <button onClick={() => setShowSettings(true)} className="clay-btn-white text-xs !py-1.5 !px-3 !rounded-[12px]">
                 Settings
               </button>
@@ -206,8 +327,12 @@ export default function App() {
               book={currentBook}
               position={position}
               settings={settings}
+              highlights={highlights.items}
               onPositionChange={handlePositionChange}
-              onTextSelect={handleTextSelect}
+              onSelectionAction={handleSelectionAction}
+              onHighlightClick={(id, rect) => setEditing({ id, rect })}
+              hasExplain={ai.available}
+              aiAvailable={ai.available}
             />
           </div>
         )}
@@ -226,14 +351,56 @@ export default function App() {
             onClose={() => setShowAI(false)}
           />
         )}
+
+        {showHighlights && currentBook && (
+          <HighlightsPanel
+            items={highlights.items}
+            onJump={(h) => handlePositionChange(h.anchor.chapterIndex, 0, 0)}
+            onClose={() => setShowHighlights(false)}
+          />
+        )}
       </div>
 
       {showLibrary && (
         <Library books={library} currentHash={currentBook?.hash ?? null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
       )}
+      {dict && (
+        <DictionaryPopup
+          loading={dict.loading}
+          entry={dict.entry}
+          notFoundWord={dict.notFoundWord}
+          rect={dict.rect}
+          onClose={() => setDict(null)}
+        />
+      )}
+      {translate && (
+        <TranslatePopup
+          loading={translate.loading}
+          source={translate.source}
+          translation={translate.translation}
+          error={translate.error}
+          targetLang={translate.targetLang}
+          rect={translate.rect}
+          onClose={() => setTranslate(null)}
+        />
+      )}
       {showSettings && (
         <Settings settings={settings} onChange={handleSettingsChange} onClose={() => setShowSettings(false)} isPdf={currentBook?.format === "pdf"} />
       )}
+      {editing && (() => {
+        const h = highlights.items.find((x) => x.id === editing.id);
+        if (!h) return null;
+        return (
+          <HighlightEditPopup
+            highlight={h}
+            rect={editing.rect}
+            onChangeColor={(c) => highlights.update(h.id, { color: c })}
+            onChangeNote={(n) => highlights.update(h.id, { note: n })}
+            onDelete={() => { highlights.remove(h.id); setEditing(null); }}
+            onClose={() => setEditing(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

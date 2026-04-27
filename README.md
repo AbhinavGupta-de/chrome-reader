@@ -76,5 +76,6 @@ Then load the extension in Chrome:
 - **Clean reading UI:** Light, Dark, and Sepia themes
 - **Reading position sync:** Local-first with background sync to backend
 - **AI Assistant (Claude):** Chapter summaries, Q&A, key highlights, passage explanation
+- **Selection toolbar:** Highlight (4 colors, persisted + synced), Define (free dictionary), Translate (Claude), Web Search
 - **Google Sign-In:** Secure authentication
 
