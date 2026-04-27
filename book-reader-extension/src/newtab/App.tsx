@@ -5,6 +5,7 @@ import AIPanel from "./components/AIPanel";
 import ProgressBar from "./components/ProgressBar";
 import Settings from "./components/Settings";
 import DictionaryPopup from "./components/popups/DictionaryPopup";
+import TranslatePopup from "./components/popups/TranslatePopup";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
@@ -12,6 +13,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useAI } from "./hooks/useAI";
 import { getSettings, saveSettings, ReaderSettings, DEFAULT_SETTINGS } from "./lib/storage";
 import { defineWord, DictEntry } from "./lib/dictionary";
+import { aiTranslate } from "./lib/api";
 
 export default function App() {
   const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
@@ -26,6 +28,14 @@ export default function App() {
     loading: boolean;
     entry: DictEntry | null;
     notFoundWord: string | null;
+    rect: DOMRect;
+  } | null>(null);
+  const [translate, setTranslate] = useState<{
+    loading: boolean;
+    source: string;
+    translation: string | null;
+    error: string | null;
+    targetLang: string;
     rect: DOMRect;
   } | null>(null);
 
@@ -78,9 +88,25 @@ export default function App() {
         });
         return;
       }
+      if (action === "translate") {
+        if (!currentBook) return;
+        if (!ai.available) {
+          setTranslate({ loading: false, source: p.text, translation: null, error: "Sign in to translate", targetLang: settings.translateTo, rect: p.rect });
+          return;
+        }
+        setTranslate({ loading: true, source: p.text, translation: null, error: null, targetLang: settings.translateTo, rect: p.rect });
+        aiTranslate(currentBook.hash, p.text, settings.translateTo)
+          .then((r) =>
+            setTranslate({ loading: false, source: p.text, translation: r.translation, error: null, targetLang: settings.translateTo, rect: p.rect })
+          )
+          .catch((e) =>
+            setTranslate({ loading: false, source: p.text, translation: null, error: e instanceof Error ? e.message : "Failed", targetLang: settings.translateTo, rect: p.rect })
+          );
+        return;
+      }
       // dictionary / translate / highlight handled in later tasks
     },
-    []
+    [currentBook, ai.available, settings.translateTo]
   );
 
   const getCurrentChapterText = useCallback((): string => {
@@ -275,6 +301,17 @@ export default function App() {
           notFoundWord={dict.notFoundWord}
           rect={dict.rect}
           onClose={() => setDict(null)}
+        />
+      )}
+      {translate && (
+        <TranslatePopup
+          loading={translate.loading}
+          source={translate.source}
+          translation={translate.translation}
+          error={translate.error}
+          targetLang={translate.targetLang}
+          rect={translate.rect}
+          onClose={() => setTranslate(null)}
         />
       )}
       {showSettings && (
