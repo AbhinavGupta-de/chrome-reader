@@ -10,11 +10,11 @@ interface Props {
 }
 
 export default function DictionaryPopup({ loading, entry, notFoundWord, rect, onClose }: Props) {
-  const top = window.scrollY + rect.bottom + 8;
-  const left = window.scrollX + rect.left;
+  const top = rect.bottom + 8;
+  const left = rect.left;
   return (
     <div
-      className="absolute z-50 clay-card !p-3 w-72 max-h-80 overflow-y-auto"
+      className="fixed z-50 clay-card !p-3 w-72 max-h-80 overflow-y-auto"
       style={{ top, left }}
     >
       <div className="flex justify-between items-start mb-2">

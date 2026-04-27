@@ -11,10 +11,10 @@ interface Props {
 }
 
 export default function TranslatePopup({ loading, source, translation, error, targetLang, rect, onClose }: Props) {
-  const top = window.scrollY + rect.bottom + 8;
-  const left = window.scrollX + rect.left;
+  const top = rect.bottom + 8;
+  const left = rect.left;
   return (
-    <div className="absolute z-50 clay-card !p-3 w-80" style={{ top, left }}>
+    <div className="fixed z-50 clay-card !p-3 w-80" style={{ top, left }}>
       <div className="flex justify-between items-start mb-2">
         <p className="text-xs text-silver">→ {targetLang}</p>
         <button onClick={onClose} className="text-silver text-xs">✕</button>

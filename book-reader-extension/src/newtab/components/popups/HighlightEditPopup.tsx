@@ -16,12 +16,12 @@ interface Props {
 }
 
 export default function HighlightEditPopup({ highlight, rect, onChangeColor, onChangeNote, onDelete, onClose }: Props) {
-  const top = window.scrollY + rect.bottom + 6;
-  const left = window.scrollX + rect.left;
+  const top = rect.bottom + 6;
+  const left = rect.left;
   const [note, setNote] = useState(highlight.note ?? "");
 
   return (
-    <div className="absolute z-50 clay-card !p-3 w-72" style={{ top, left }}>
+    <div className="fixed z-50 clay-card !p-3 w-72" style={{ top, left }}>
       <div className="flex justify-between mb-2">
         <div className="flex gap-1">
           {COLORS.map((c) => (

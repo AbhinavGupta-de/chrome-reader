@@ -20,13 +20,13 @@ const COLOR_SWATCH: Record<HighlightColor, string> = {
 };
 
 export default function SelectionToolbar({ rect, hasExplain, aiAvailable, onAction }: Props) {
-  const top = Math.max(window.scrollY + rect.top - 48, window.scrollY + 8);
-  const left = window.scrollX + rect.left + rect.width / 2;
+  const top = Math.max(rect.top - 48, 8);
+  const left = rect.left + rect.width / 2;
   const [showColors, setShowColors] = React.useState(false);
 
   return (
     <div
-      className="absolute z-50 -translate-x-1/2 clay-card flex items-center gap-1 !rounded-[1584px] px-2 py-1 shadow-md"
+      className="fixed z-50 -translate-x-1/2 clay-card flex items-center gap-1 !rounded-[1584px] px-2 py-1 shadow-md"
       style={{ top, left }}
       onMouseDown={(e) => e.preventDefault()} // keep selection alive
     >
