@@ -6,6 +6,7 @@ import ProgressBar from "./components/ProgressBar";
 import Settings from "./components/Settings";
 import DictionaryPopup from "./components/popups/DictionaryPopup";
 import TranslatePopup from "./components/popups/TranslatePopup";
+import HighlightEditPopup from "./components/popups/HighlightEditPopup";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
@@ -335,6 +336,20 @@ export default function App() {
       {showSettings && (
         <Settings settings={settings} onChange={handleSettingsChange} onClose={() => setShowSettings(false)} isPdf={currentBook?.format === "pdf"} />
       )}
+      {editing && (() => {
+        const h = highlights.items.find((x) => x.id === editing.id);
+        if (!h) return null;
+        return (
+          <HighlightEditPopup
+            highlight={h}
+            rect={editing.rect}
+            onChangeColor={(c) => highlights.update(h.id, { color: c })}
+            onChangeNote={(n) => highlights.update(h.id, { note: n })}
+            onDelete={() => { highlights.remove(h.id); setEditing(null); }}
+            onClose={() => setEditing(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
