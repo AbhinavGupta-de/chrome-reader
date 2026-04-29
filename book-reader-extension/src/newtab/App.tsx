@@ -7,6 +7,7 @@ import Settings from "./components/Settings";
 import DictionaryPopup from "./components/popups/DictionaryPopup";
 import TranslatePopup from "./components/popups/TranslatePopup";
 import HighlightEditPopup from "./components/popups/HighlightEditPopup";
+import ReviewModal from "./components/ReviewModal";
 import HighlightsPanel from "./components/HighlightsPanel";
 import WordsPanel from "./components/WordsPanel";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
@@ -494,6 +495,13 @@ export default function App() {
           />
         );
       })()}
+      {showReview && (
+        <ReviewModal
+          items={vocab.items}
+          onRate={async (id, rating) => { await vocab.applyReview(id, rating); }}
+          onClose={() => setShowReview(false)}
+        />
+      )}
     </div>
   );
 }
