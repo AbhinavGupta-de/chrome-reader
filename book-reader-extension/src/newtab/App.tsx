@@ -8,6 +8,7 @@ import DictionaryPopup from "./components/popups/DictionaryPopup";
 import TranslatePopup from "./components/popups/TranslatePopup";
 import HighlightEditPopup from "./components/popups/HighlightEditPopup";
 import HighlightsPanel from "./components/HighlightsPanel";
+import WordsPanel from "./components/WordsPanel";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
@@ -29,6 +30,9 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
+  const [showWords, setShowWords] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [toolbarHover, setToolbarHover] = useState(false);
   const [dict, setDict] = useState<{
@@ -320,6 +324,12 @@ export default function App() {
               >
                 Highlights
               </button>
+              <button
+                onClick={() => setShowWords(!showWords)}
+                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showWords ? "clay-btn-solid" : "clay-btn-white"}`}
+              >
+                Words {vocab.dueCount > 0 && <span className="text-pomegranate-400 ml-0.5">({vocab.dueCount})</span>}
+              </button>
               <button onClick={() => setShowSettings(true)} className="clay-btn-white text-xs !py-1.5 !px-3 !rounded-[12px]">
                 Settings
               </button>
@@ -381,6 +391,19 @@ export default function App() {
             items={highlights.items}
             onJump={(h) => handlePositionChange(h.anchor.chapterIndex, 0, 0)}
             onClose={() => setShowHighlights(false)}
+          />
+        )}
+
+        {showWords && (
+          <WordsPanel
+            items={vocab.items}
+            currentBookHash={currentBook?.hash ?? null}
+            dueCount={vocab.dueCount}
+            onClose={() => setShowWords(false)}
+            onDelete={(id) => vocab.unsave(id)}
+            onResetStage={(id) => vocab.resetStage(id)}
+            onReview={() => setShowReview(true)}
+            onQuiz={() => setShowQuiz(true)}
           />
         )}
       </div>
