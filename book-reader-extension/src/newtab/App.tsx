@@ -8,6 +8,7 @@ import DictionaryPopup from "./components/popups/DictionaryPopup";
 import TranslatePopup from "./components/popups/TranslatePopup";
 import HighlightEditPopup from "./components/popups/HighlightEditPopup";
 import ReviewModal from "./components/ReviewModal";
+import QuizModal from "./components/QuizModal";
 import HighlightsPanel from "./components/HighlightsPanel";
 import WordsPanel from "./components/WordsPanel";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
@@ -500,6 +501,12 @@ export default function App() {
           items={vocab.items}
           onRate={async (id, rating) => { await vocab.applyReview(id, rating); }}
           onClose={() => setShowReview(false)}
+        />
+      )}
+      {showQuiz && (
+        <QuizModal
+          items={vocab.items}
+          onClose={() => setShowQuiz(false)}
         />
       )}
     </div>
