@@ -7,7 +7,10 @@ import Settings from "./components/Settings";
 import DictionaryPopup from "./components/popups/DictionaryPopup";
 import TranslatePopup from "./components/popups/TranslatePopup";
 import HighlightEditPopup from "./components/popups/HighlightEditPopup";
+import ReviewModal from "./components/ReviewModal";
+import QuizModal from "./components/QuizModal";
 import HighlightsPanel from "./components/HighlightsPanel";
+import WordsPanel from "./components/WordsPanel";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
@@ -18,6 +21,8 @@ import { defineWord, DictEntry } from "./lib/dictionary";
 import { aiTranslate } from "./lib/api";
 import { useHighlights } from "./hooks/useHighlights";
 import { buildAnchor, offsetsFromRange } from "./lib/highlights/anchor";
+import { useVocab } from "./hooks/useVocab";
+import { VocabContext, VocabDefinition } from "./lib/vocab/types";
 
 export default function App() {
   const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
@@ -27,6 +32,9 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
+  const [showWords, setShowWords] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [toolbarHover, setToolbarHover] = useState(false);
   const [dict, setDict] = useState<{
@@ -34,7 +42,11 @@ export default function App() {
     entry: DictEntry | null;
     notFoundWord: string | null;
     rect: DOMRect;
+    selectionText: string;
+    contextSentence: string;
+    chapterIndex: number;
   } | null>(null);
+  const [savedWordId, setSavedWordId] = useState<string | null>(null);
   const [translate, setTranslate] = useState<{
     loading: boolean;
     source: string;
@@ -52,6 +64,7 @@ export default function App() {
 
   const ai = useAI(currentBook?.hash ?? null);
   const highlights = useHighlights(currentBook?.hash ?? null);
+  const vocab = useVocab();
   const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(null);
 
   useEffect(() => { getSettings().then(setSettings); }, []);
@@ -69,6 +82,19 @@ export default function App() {
   useEffect(() => {
     const onOnline = () => {
       import("./lib/highlights/sync").then((m) => m.pushPendingHighlights());
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    vocab.refresh();
+  }, [user]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      import("./lib/vocab/sync").then((m) => m.pushPendingVocab());
     };
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
@@ -103,13 +129,30 @@ export default function App() {
         return;
       }
       if (action === "define") {
-        setDict({ loading: true, entry: null, notFoundWord: null, rect: p.rect });
+        const ctxText = p.chapterText;
+        const idx = ctxText.toLowerCase().indexOf(p.text.toLowerCase());
+        const sentence = idx >= 0
+          ? ctxText.slice(Math.max(0, idx - 60), Math.min(ctxText.length, idx + p.text.length + 60))
+          : p.text;
+        setDict({
+          loading: true,
+          entry: null,
+          notFoundWord: null,
+          rect: p.rect,
+          selectionText: p.text,
+          contextSentence: sentence,
+          chapterIndex: p.chapterIndex,
+        });
+        setSavedWordId(null);
         defineWord(p.text).then((entry) => {
           setDict({
             loading: false,
             entry,
             notFoundWord: entry ? null : p.text.split(/\s+/)[0] ?? p.text,
             rect: p.rect,
+            selectionText: p.text,
+            contextSentence: sentence,
+            chapterIndex: p.chapterIndex,
           });
         });
         return;
@@ -296,6 +339,12 @@ export default function App() {
               >
                 Highlights
               </button>
+              <button
+                onClick={() => setShowWords(!showWords)}
+                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showWords ? "clay-btn-solid" : "clay-btn-white"}`}
+              >
+                Words {vocab.dueCount > 0 && <span className="text-pomegranate-400 ml-0.5">({vocab.dueCount})</span>}
+              </button>
               <button onClick={() => setShowSettings(true)} className="clay-btn-white text-xs !py-1.5 !px-3 !rounded-[12px]">
                 Settings
               </button>
@@ -359,18 +408,77 @@ export default function App() {
             onClose={() => setShowHighlights(false)}
           />
         )}
+
+        {showWords && (
+          <WordsPanel
+            items={vocab.items}
+            currentBookHash={currentBook?.hash ?? null}
+            dueCount={vocab.dueCount}
+            onClose={() => setShowWords(false)}
+            onDelete={(id) => vocab.unsave(id)}
+            onResetStage={(id) => vocab.resetStage(id)}
+            onReview={() => setShowReview(true)}
+            onQuiz={() => setShowQuiz(true)}
+          />
+        )}
       </div>
 
       {showLibrary && (
         <Library books={library} currentHash={currentBook?.hash ?? null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
       )}
-      {dict && (
+      {dict && currentBook && (
         <DictionaryPopup
           loading={dict.loading}
           entry={dict.entry}
           notFoundWord={dict.notFoundWord}
           rect={dict.rect}
-          onClose={() => setDict(null)}
+          selectionText={dict.selectionText}
+          contextSentence={dict.contextSentence}
+          bookHash={currentBook.hash}
+          bookTitle={currentBook.metadata.title}
+          chapterIndex={dict.chapterIndex}
+          isSaved={savedWordId !== null}
+          audioUrlFromEntry={
+            (dict.entry as any)?.phonetics?.find?.((p: any) => p.audio)?.audio
+          }
+          onAutoSave={async (entry, sentence) => {
+            const audio: string | undefined = (entry as any).phonetics?.find?.((p: any) => p.audio)?.audio;
+            const existing = await vocab.findByWord(entry.word);
+            const defs: VocabDefinition[] = (entry.meanings ?? []).flatMap((m) =>
+              m.definitions.map((d) => ({ partOfSpeech: m.partOfSpeech, definition: d.definition, example: d.example }))
+            ).slice(0, 3);
+            const context: VocabContext = {
+              bookHash: currentBook.hash,
+              bookTitle: currentBook.metadata.title,
+              chapterIndex: dict.chapterIndex,
+              sentence,
+              savedAt: Date.now(),
+            };
+            if (existing) {
+              const w = await vocab.save({
+                word: entry.word,
+                phonetic: entry.phonetic,
+                audioUrl: audio,
+                definitions: defs.length > 0 ? defs : existing.definitions,
+                context,
+              });
+              setSavedWordId(w.id);
+              return;
+            }
+            const w = await vocab.save({
+              word: entry.word,
+              phonetic: entry.phonetic,
+              audioUrl: audio,
+              definitions: defs,
+              context,
+            });
+            setSavedWordId(w.id);
+          }}
+          onUnsave={async () => {
+            if (savedWordId) await vocab.unsave(savedWordId);
+            setSavedWordId(null);
+          }}
+          onClose={() => { setDict(null); setSavedWordId(null); }}
         />
       )}
       {translate && (
@@ -401,6 +509,19 @@ export default function App() {
           />
         );
       })()}
+      {showReview && (
+        <ReviewModal
+          items={vocab.items}
+          onRate={async (id, rating) => { await vocab.applyReview(id, rating); }}
+          onClose={() => setShowReview(false)}
+        />
+      )}
+      {showQuiz && (
+        <QuizModal
+          items={vocab.items}
+          onClose={() => setShowQuiz(false)}
+        />
+      )}
     </div>
   );
 }

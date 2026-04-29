@@ -192,3 +192,51 @@ export async function putRemoteHighlight(
 export async function deleteRemoteHighlight(bookHash: string, clientId: string): Promise<void> {
   await request(`/highlights/${bookHash}/${clientId}`, { method: "DELETE" });
 }
+
+export interface RemoteVocabWord {
+  id: string;
+  clientId: string;
+  word: string;
+  phonetic: string | null;
+  audioUrl: string | null;
+  definitions: unknown;
+  contexts: unknown;
+  stage: number;
+  mastered: boolean;
+  nextReviewAt: string;
+  lastReviewAt: string | null;
+  correctStreak: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export async function listRemoteVocab(): Promise<RemoteVocabWord[]> {
+  const r = await request<{ words: RemoteVocabWord[] }>(`/vocabulary`);
+  return r.words;
+}
+
+export async function putRemoteVocab(
+  clientId: string,
+  body: {
+    word: string;
+    phonetic: string | null;
+    audioUrl: string | null;
+    definitions: unknown;
+    contexts: unknown;
+    stage: number;
+    mastered: boolean;
+    nextReviewAt: number;
+    lastReviewAt: number | null;
+    correctStreak: number;
+  }
+): Promise<{ id: string; clientId: string }> {
+  return request(`/vocabulary/${clientId}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteRemoteVocab(clientId: string): Promise<void> {
+  await request(`/vocabulary/${clientId}`, { method: "DELETE" });
+}

@@ -7,6 +7,8 @@ import {
   real,
   jsonb,
   uniqueIndex,
+  boolean,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -71,5 +73,31 @@ export const highlights = pgTable(
   },
   (table) => [
     uniqueIndex("user_client_id_idx").on(table.userId, table.clientId),
+  ]
+);
+
+export const vocabulary = pgTable(
+  "vocabulary",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    clientId: text("client_id").notNull(),
+    word: text("word").notNull(),
+    phonetic: text("phonetic"),
+    audioUrl: text("audio_url"),
+    definitions: jsonb("definitions").notNull(),
+    contexts: jsonb("contexts").notNull(),
+    stage: integer("stage").notNull().default(0),
+    mastered: boolean("mastered").notNull().default(false),
+    nextReviewAt: timestamp("next_review_at").notNull(),
+    lastReviewAt: timestamp("last_review_at"),
+    correctStreak: integer("correct_streak").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (t) => [
+    uniqueIndex("vocab_user_client_id_idx").on(t.userId, t.clientId),
+    index("vocab_user_word_idx").on(t.userId, t.word),
   ]
 );
