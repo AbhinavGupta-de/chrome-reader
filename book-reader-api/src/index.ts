@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import positionRoutes from "./routes/position.js";
 import aiRoutes from "./routes/ai.js";
 import highlightRoutes from "./routes/highlights.js";
+import vocabularyRoutes from "./routes/vocabulary.js";
 
 const app = new Hono();
 
@@ -44,6 +45,7 @@ app.route("/auth", authRoutes);
 app.route("/position", positionRoutes);
 app.route("/ai", aiRoutes);
 app.route("/highlights", highlightRoutes);
+app.route("/vocabulary", vocabularyRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 
