@@ -18,6 +18,8 @@ import { defineWord, DictEntry } from "./lib/dictionary";
 import { aiTranslate } from "./lib/api";
 import { useHighlights } from "./hooks/useHighlights";
 import { buildAnchor, offsetsFromRange } from "./lib/highlights/anchor";
+import { useVocab } from "./hooks/useVocab";
+import { VocabContext, VocabDefinition } from "./lib/vocab/types";
 
 export default function App() {
   const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
@@ -34,7 +36,11 @@ export default function App() {
     entry: DictEntry | null;
     notFoundWord: string | null;
     rect: DOMRect;
+    selectionText: string;
+    contextSentence: string;
+    chapterIndex: number;
   } | null>(null);
+  const [savedWordId, setSavedWordId] = useState<string | null>(null);
   const [translate, setTranslate] = useState<{
     loading: boolean;
     source: string;
@@ -52,6 +58,7 @@ export default function App() {
 
   const ai = useAI(currentBook?.hash ?? null);
   const highlights = useHighlights(currentBook?.hash ?? null);
+  const vocab = useVocab();
   const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(null);
 
   useEffect(() => { getSettings().then(setSettings); }, []);
@@ -103,13 +110,30 @@ export default function App() {
         return;
       }
       if (action === "define") {
-        setDict({ loading: true, entry: null, notFoundWord: null, rect: p.rect });
+        const ctxText = p.chapterText;
+        const idx = ctxText.toLowerCase().indexOf(p.text.toLowerCase());
+        const sentence = idx >= 0
+          ? ctxText.slice(Math.max(0, idx - 60), Math.min(ctxText.length, idx + p.text.length + 60))
+          : p.text;
+        setDict({
+          loading: true,
+          entry: null,
+          notFoundWord: null,
+          rect: p.rect,
+          selectionText: p.text,
+          contextSentence: sentence,
+          chapterIndex: p.chapterIndex,
+        });
+        setSavedWordId(null);
         defineWord(p.text).then((entry) => {
           setDict({
             loading: false,
             entry,
             notFoundWord: entry ? null : p.text.split(/\s+/)[0] ?? p.text,
             rect: p.rect,
+            selectionText: p.text,
+            contextSentence: sentence,
+            chapterIndex: p.chapterIndex,
           });
         });
         return;
@@ -364,13 +388,59 @@ export default function App() {
       {showLibrary && (
         <Library books={library} currentHash={currentBook?.hash ?? null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
       )}
-      {dict && (
+      {dict && currentBook && (
         <DictionaryPopup
           loading={dict.loading}
           entry={dict.entry}
           notFoundWord={dict.notFoundWord}
           rect={dict.rect}
-          onClose={() => setDict(null)}
+          selectionText={dict.selectionText}
+          contextSentence={dict.contextSentence}
+          bookHash={currentBook.hash}
+          bookTitle={currentBook.metadata.title}
+          chapterIndex={dict.chapterIndex}
+          isSaved={savedWordId !== null}
+          audioUrlFromEntry={
+            (dict.entry as any)?.phonetics?.find?.((p: any) => p.audio)?.audio
+          }
+          onAutoSave={async (entry, sentence) => {
+            const audio: string | undefined = (entry as any).phonetics?.find?.((p: any) => p.audio)?.audio;
+            const existing = await vocab.findByWord(entry.word);
+            const defs: VocabDefinition[] = (entry.meanings ?? []).flatMap((m) =>
+              m.definitions.map((d) => ({ partOfSpeech: m.partOfSpeech, definition: d.definition, example: d.example }))
+            ).slice(0, 3);
+            const context: VocabContext = {
+              bookHash: currentBook.hash,
+              bookTitle: currentBook.metadata.title,
+              chapterIndex: dict.chapterIndex,
+              sentence,
+              savedAt: Date.now(),
+            };
+            if (existing) {
+              const w = await vocab.save({
+                word: entry.word,
+                phonetic: entry.phonetic,
+                audioUrl: audio,
+                definitions: defs.length > 0 ? defs : existing.definitions,
+                context,
+              });
+              setSavedWordId(w.id);
+              return;
+            }
+            const w = await vocab.save({
+              word: entry.word,
+              phonetic: entry.phonetic,
+              audioUrl: audio,
+              definitions: defs,
+              context,
+            });
+            setSavedWordId(w.id);
+          }}
+          onUnsave={async () => {
+            if (savedWordId) await vocab.unsave(savedWordId);
+            setSavedWordId(null);
+          }}
+          onClose={() => { setDict(null); setSavedWordId(null); }}
         />
       )}
       {translate && (
