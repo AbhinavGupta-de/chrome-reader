@@ -5,22 +5,50 @@ interface Props {
   url?: string;
   size?: number;
   className?: string;
+  lang?: string; // BCP-47, e.g. "en", "es", "fr"
 }
 
-export default function AudioButton({ text, url, size = 14, className = "" }: Props) {
+function googleTtsUrl(text: string, lang: string): string {
+  const trimmed = text.trim().slice(0, 200);
+  const params = new URLSearchParams({
+    ie: "UTF-8",
+    tl: lang,
+    client: "tw-ob",
+    q: trimmed,
+  });
+  return `https://translate.google.com/translate_tts?${params.toString()}`;
+}
+
+async function tryPlayUrl(src: string): Promise<boolean> {
+  try {
+    const a = new Audio(src);
+    a.crossOrigin = "anonymous";
+    await a.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export default function AudioButton({ text, url, size = 14, className = "", lang = "en" }: Props) {
   const play = async () => {
-    if (url) {
-      try {
-        const a = new Audio(url);
-        await a.play();
-        return;
-      } catch {
-        // fall through to TTS
-      }
-    }
+    // 1. Wiktionary / dictionary audio when available
+    if (url && (await tryPlayUrl(url))) return;
+    // 2. Google Translate TTS — better than browser TTS, free, no key
+    if (text && (await tryPlayUrl(googleTtsUrl(text, lang)))) return;
+    // 3. Last resort — Web Speech API
     if (typeof speechSynthesis !== "undefined" && text) {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US";
+      u.lang = lang === "en" ? "en-US" : lang;
+      // Pick the best available voice for the language (premium/enhanced if present)
+      const voices = speechSynthesis.getVoices();
+      const langPrefix = u.lang.split("-")[0].toLowerCase();
+      const candidates = voices.filter((v) => v.lang.toLowerCase().startsWith(langPrefix));
+      const preferred =
+        candidates.find((v) => /premium|enhanced|natural/i.test(v.name)) ??
+        candidates.find((v) => v.localService) ??
+        candidates[0];
+      if (preferred) u.voice = preferred;
       speechSynthesis.cancel();
       speechSynthesis.speak(u);
     }
