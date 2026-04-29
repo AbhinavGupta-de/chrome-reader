@@ -87,6 +87,19 @@ export default function App() {
     return () => window.removeEventListener("online", onOnline);
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    vocab.refresh();
+  }, [user]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      import("./lib/vocab/sync").then((m) => m.pushPendingVocab());
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
+
   const handleSettingsChange = useCallback(async (s: ReaderSettings) => {
     setSettings(s);
     await saveSettings(s);
