@@ -221,12 +221,11 @@ export default function App() {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-cream text-clay-black fade-in">
         <div className="text-center max-w-sm px-6">
-          <div className="w-20 h-20 mx-auto mb-8 rounded-[24px] bg-clay-black flex items-center justify-center clay-shadow">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
-            </svg>
-          </div>
+          <img
+            src="/BookFlipSmall.jpg"
+            alt="Instant Book Reader"
+            className="w-24 h-24 mx-auto mb-8 rounded-[24px] object-cover clay-shadow"
+          />
 
           <h1 className="text-4xl font-semibold tracking-tight mb-2" style={{ letterSpacing: "-1.6px" }}>
             Instant Reader
