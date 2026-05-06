@@ -1,0 +1,264 @@
+/* themes.css — preset color overrides.
+   Each block uses :root[data-theme="<id>"] (specificity 0,1,1) so it strictly
+   beats the bare :root (0,1,0) light defaults declared in index.css.
+   Token NAMES are never changed — Tailwind v4 utilities (bg-cream, text-clay-black,
+   border-oat, etc.) all resolve through these names via the @theme block in index.css. */
+
+/* ── Light (explicit; equivalent to bare :root, kept for completeness) ── */
+:root[data-theme="light"] {
+  --cream: #faf9f7;
+  --black: #000000;
+  --white: #ffffff;
+  --oat: #dad4c8;
+  --oat-light: #eee9df;
+  --silver: #9f9b93;
+  --charcoal: #55534e;
+  --light-frost: #eff1f3;
+  --reader-prose-bg: transparent;
+}
+
+/* ── Dark (lifted verbatim from the old .dark block in index.css) ── */
+:root[data-theme="dark"] {
+  --cream: #1a1815;
+  --black: #f0ede8;
+  --white: #242220;
+  --oat: #3d3a35;
+  --oat-light: #2e2b27;
+  --silver: #7a766e;
+  --charcoal: #a09c94;
+  --dark-charcoal: #c0bdb7;
+  --cool-border: #3d3a35;
+  --light-frost: #2e2b27;
+  --reader-prose-bg: transparent;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Sepia ── */
+:root[data-theme="sepia"] {
+  --cream: #f4ecd8;
+  --black: #5b4636;
+  --white: #fbf3df;
+  --oat: #d8c8a8;
+  --oat-light: #ebe0c4;
+  --silver: #9c8b73;
+  --charcoal: #6c5840;
+  --light-frost: #ebe0c4;
+  --reader-prose-bg: #f4ecd8;
+}
+
+/* ── Solarized Light ── */
+:root[data-theme="solarized-light"] {
+  --cream: #fdf6e3;
+  --black: #073642;
+  --white: #eee8d5;
+  --oat: #93a1a1;
+  --oat-light: #eee8d5;
+  --silver: #93a1a1;
+  --charcoal: #586e75;
+  --light-frost: #eee8d5;
+}
+
+/* ── Solarized Dark ── */
+:root[data-theme="solarized-dark"] {
+  --cream: #002b36;
+  --black: #eee8d5;
+  --white: #073642;
+  --oat: #586e75;
+  --oat-light: #073642;
+  --silver: #657b83;
+  --charcoal: #93a1a1;
+  --dark-charcoal: #93a1a1;
+  --cool-border: #586e75;
+  --light-frost: #073642;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Nord ── */
+:root[data-theme="nord"] {
+  --cream: #2e3440;
+  --black: #eceff4;
+  --white: #3b4252;
+  --oat: #4c566a;
+  --oat-light: #434c5e;
+  --silver: #81a1c1;
+  --charcoal: #d8dee9;
+  --dark-charcoal: #d8dee9;
+  --cool-border: #4c566a;
+  --light-frost: #434c5e;
+  --matcha-600: #88c0d0;
+  --ube-800: #b48ead;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Gruvbox Light ── */
+:root[data-theme="gruvbox-light"] {
+  --cream: #fbf1c7;
+  --black: #3c3836;
+  --white: #f2e5bc;
+  --oat: #d5c4a1;
+  --oat-light: #ebdbb2;
+  --silver: #928374;
+  --charcoal: #504945;
+  --light-frost: #ebdbb2;
+}
+
+/* ── Gruvbox Dark ── */
+:root[data-theme="gruvbox-dark"] {
+  --cream: #282828;
+  --black: #ebdbb2;
+  --white: #3c3836;
+  --oat: #504945;
+  --oat-light: #32302f;
+  --silver: #928374;
+  --charcoal: #d5c4a1;
+  --dark-charcoal: #d5c4a1;
+  --cool-border: #504945;
+  --light-frost: #32302f;
+  --matcha-600: #b8bb26;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Dracula ── */
+:root[data-theme="dracula"] {
+  --cream: #282a36;
+  --black: #f8f8f2;
+  --white: #44475a;
+  --oat: #6272a4;
+  --oat-light: #44475a;
+  --silver: #6272a4;
+  --charcoal: #bd93f9;
+  --dark-charcoal: #bd93f9;
+  --cool-border: #6272a4;
+  --light-frost: #44475a;
+  --matcha-600: #50fa7b;
+  --pomegranate-400: #ff5555;
+  --ube-800: #bd93f9;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Tokyo Night ── */
+:root[data-theme="tokyo-night"] {
+  --cream: #1a1b26;
+  --black: #c0caf5;
+  --white: #24283b;
+  --oat: #414868;
+  --oat-light: #1f2335;
+  --silver: #565f89;
+  --charcoal: #a9b1d6;
+  --dark-charcoal: #a9b1d6;
+  --cool-border: #414868;
+  --light-frost: #1f2335;
+  --matcha-600: #9ece6a;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Paper ── */
+:root[data-theme="paper"] {
+  --cream: #ffffff;
+  --black: #222222;
+  --white: #fafafa;
+  --oat: #e5e5e5;
+  --oat-light: #f5f5f5;
+  --silver: #999999;
+  --charcoal: #555555;
+  --light-frost: #f5f5f5;
+}
+
+/* ── E-Ink (grayscale-only) ── */
+:root[data-theme="e-ink"] {
+  --cream: #f5f5f0;
+  --black: #1a1a1a;
+  --white: #ffffff;
+  --oat: #d0d0d0;
+  --oat-light: #e8e8e8;
+  --silver: #888888;
+  --charcoal: #404040;
+  --light-frost: #e8e8e8;
+  --matcha-600: #404040;
+  --ube-800: #404040;
+}
+
+/* ── Rosé Pine ── */
+:root[data-theme="rose-pine"] {
+  --cream: #191724;
+  --black: #e0def4;
+  --white: #1f1d2e;
+  --oat: #403d52;
+  --oat-light: #26233a;
+  --silver: #6e6a86;
+  --charcoal: #908caa;
+  --dark-charcoal: #908caa;
+  --cool-border: #403d52;
+  --light-frost: #26233a;
+  --matcha-600: #9ccfd8;
+  --ube-800: #c4a7e7;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}
+
+/* ── Catppuccin Latte ── */
+:root[data-theme="catppuccin-latte"] {
+  --cream: #eff1f5;
+  --black: #4c4f69;
+  --white: #e6e9ef;
+  --oat: #bcc0cc;
+  --oat-light: #ccd0da;
+  --silver: #6c6f85;
+  --charcoal: #5c5f77;
+  --light-frost: #ccd0da;
+}
+
+/* ── Catppuccin Mocha ── */
+:root[data-theme="catppuccin-mocha"] {
+  --cream: #1e1e2e;
+  --black: #cdd6f4;
+  --white: #313244;
+  --oat: #45475a;
+  --oat-light: #181825;
+  --silver: #6c7086;
+  --charcoal: #a6adc8;
+  --dark-charcoal: #a6adc8;
+  --cool-border: #45475a;
+  --light-frost: #181825;
+  --matcha-600: #a6e3a1;
+
+  --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
+    rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.15) 0px -0.5px 1px;
+  --shadow-hover: rgba(0, 0, 0, 0.5) -7px 7px;
+  --shadow-hover-sm: rgba(0, 0, 0, 0.3) -3px 3px;
+}

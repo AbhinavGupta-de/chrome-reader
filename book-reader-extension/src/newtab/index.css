@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
+@import "./themes.css";
 
 /* ── Clay Design Tokens ── */
 :root {
@@ -37,23 +38,17 @@
 
   --font-sans: 'DM Sans', Arial, sans-serif;
   --font-mono: 'Space Mono', monospace;
+
+  /* New tokens introduced by the multi-theme system. */
+  --reader-prose-bg: transparent;
+  --pdf-tint: normal;
 }
 
+/* `.dark` is preserved as a Tailwind dark: variant marker only.
+   All color overrides for dark mode now live in :root[data-theme="dark"]
+   inside themes.css — see the multi-theme system spec §1. */
 .dark {
-  --cream: #1a1815;
-  --black: #f0ede8;
-  --white: #242220;
-  --oat: #3d3a35;
-  --oat-light: #2e2b27;
-  --silver: #7a766e;
-  --charcoal: #a09c94;
-  --dark-charcoal: #c0bdb7;
-  --cool-border: #3d3a35;
-  --light-frost: #2e2b27;
-
-  --shadow-clay: rgba(0,0,0,0.25) 0px 1px 1px, rgba(255,255,255,0.03) 0px -1px 1px inset, rgba(0,0,0,0.15) 0px -0.5px 1px;
-  --shadow-hover: rgba(0,0,0,0.5) -7px 7px;
-  --shadow-hover-sm: rgba(0,0,0,0.3) -3px 3px;
+  /* intentionally empty */
 }
 
 @theme {
@@ -247,3 +242,21 @@ html, body, #root {
   to { opacity: 1; }
 }
 .fade-in { animation: fade-in 0.3s ease-out; }
+
+@keyframes slide-in-left {
+  from { transform: translateX(-12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-in-left { animation: slide-in-left 0.2s ease-out; }
+
+@keyframes slide-in-right {
+  from { transform: translateX(12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-in-right { animation: slide-in-right 0.2s ease-out; }
+
+@keyframes drop-down {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.drop-down { animation: drop-down 0.18s ease-out; }

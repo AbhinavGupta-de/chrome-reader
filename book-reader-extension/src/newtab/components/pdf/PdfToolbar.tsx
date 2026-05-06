@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import type { PdfViewMode, PdfColorMode } from "./PdfViewer";
 
 interface PdfToolbarProps {
@@ -7,7 +7,7 @@ interface PdfToolbarProps {
   zoom: number;
   viewMode: PdfViewMode;
   colorMode: PdfColorMode;
-  showThumbnails: boolean;
+  showThumbnailStrip: boolean;
   showViewMode?: boolean;
   showPageNav?: boolean;
   showColorMode?: boolean;
@@ -18,7 +18,7 @@ interface PdfToolbarProps {
   onZoomReset: () => void;
   onViewModeChange: (mode: PdfViewMode) => void;
   onColorModeChange: (mode: PdfColorMode) => void;
-  onToggleThumbnails: () => void;
+  onToggleThumbnailStrip: () => void;
   zoomMin: number;
   zoomMax: number;
 }
@@ -92,7 +92,7 @@ export default function PdfToolbar({
   zoom,
   viewMode,
   colorMode,
-  showThumbnails,
+  showThumbnailStrip,
   showViewMode = true,
   showPageNav = true,
   showColorMode = true,
@@ -103,7 +103,7 @@ export default function PdfToolbar({
   onZoomReset,
   onViewModeChange,
   onColorModeChange,
-  onToggleThumbnails,
+  onToggleThumbnailStrip,
   zoomMin,
   zoomMax,
 }: PdfToolbarProps) {
@@ -124,11 +124,11 @@ export default function PdfToolbar({
 
   return (
     <div className="flex items-center px-3 py-2 border-b border-oat flex-shrink-0">
-      {/* Thumbnails toggle - pinned left */}
+      {/* Thumbnail strip toggle - pinned left */}
       <button
-        onClick={onToggleThumbnails}
-        className={`clay-btn-white !p-1.5 !rounded-[8px] transition-colors flex-shrink-0 ${showThumbnails ? "!bg-matcha-600/10 !border-matcha-600" : ""}`}
-        title="Toggle thumbnails"
+        onClick={onToggleThumbnailStrip}
+        className={`clay-btn-white !p-1.5 !rounded-[8px] transition-colors flex-shrink-0 ${showThumbnailStrip ? "!bg-matcha-600/10 !border-matcha-600" : ""}`}
+        title="Toggle thumbnail strip"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
           <rect x="1" y="1" width="4" height="5" rx="0.5" />
