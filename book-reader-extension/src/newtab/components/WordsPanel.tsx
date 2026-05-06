@@ -3,46 +3,59 @@ import { VocabWord } from "../lib/vocab/types";
 import AudioButton from "./AudioButton";
 import { wordsToCsv, downloadCsv } from "../lib/vocab/csv";
 
-type SortKey = "recent" | "alpha" | "seen" | "due";
+type WordsSortKey = "recent" | "alpha" | "seen" | "due";
+type WordsScope = "all" | "book";
 
-interface Props {
+interface WordsPanelProps {
   items: VocabWord[];
   currentBookHash: string | null;
   dueCount: number;
-  onClose: () => void;
   onDelete: (id: string) => void;
   onResetStage: (id: string) => void;
   onReview: () => void;
   onQuiz: () => void;
 }
 
-export default function WordsPanel({ items, currentBookHash, dueCount, onClose, onDelete, onResetStage, onReview, onQuiz }: Props) {
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("recent");
-  const [scope, setScope] = useState<"all" | "book">("all");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+/**
+ * Body for the words right-side panel. The Panel container owns the header
+ * (title + close X); this component renders the search/sort controls and
+ * scrollable word list.
+ */
+export default function WordsPanel({
+  items,
+  currentBookHash,
+  dueCount,
+  onDelete,
+  onResetStage,
+  onReview,
+  onQuiz,
+}: WordsPanelProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<WordsSortKey>("recent");
+  const [scope, setScope] = useState<WordsScope>("all");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     let arr = items.slice();
     if (scope === "book" && currentBookHash) {
-      arr = arr.filter((w) => w.contexts.some((c) => c.bookHash === currentBookHash));
+      arr = arr.filter((word) => word.contexts.some((context) => context.bookHash === currentBookHash));
     }
-    if (search.trim()) {
-      const s = search.trim().toLowerCase();
-      arr = arr.filter((w) => w.word.includes(s));
+    if (searchQuery.trim()) {
+      const needle = searchQuery.trim().toLowerCase();
+      arr = arr.filter((word) => word.word.includes(needle));
     }
     arr.sort((a, b) => {
-      if (sort === "alpha") return a.word.localeCompare(b.word);
-      if (sort === "seen") return b.contexts.length - a.contexts.length;
-      if (sort === "due") return a.nextReviewAt - b.nextReviewAt;
+      if (sortKey === "alpha") return a.word.localeCompare(b.word);
+      if (sortKey === "seen") return b.contexts.length - a.contexts.length;
+      if (sortKey === "due") return a.nextReviewAt - b.nextReviewAt;
       return b.createdAt - a.createdAt;
     });
     return arr;
-  }, [items, search, sort, scope, currentBookHash]);
+  }, [items, searchQuery, sortKey, scope, currentBookHash]);
 
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
+  const toggleSelectId = (id: string) => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -50,8 +63,8 @@ export default function WordsPanel({ items, currentBookHash, dueCount, onClose, 
     });
   };
 
-  const toggleExpand = (id: string) => {
-    setExpanded((prev) => {
+  const toggleExpandId = (id: string) => {
+    setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -60,8 +73,8 @@ export default function WordsPanel({ items, currentBookHash, dueCount, onClose, 
   };
 
   const bulkDelete = () => {
-    for (const id of selected) onDelete(id);
-    setSelected(new Set());
+    for (const id of selectedIds) onDelete(id);
+    setSelectedIds(new Set());
   };
 
   const exportCsv = () => {
@@ -71,38 +84,40 @@ export default function WordsPanel({ items, currentBookHash, dueCount, onClose, 
   };
 
   return (
-    <div className="w-80 border-l border-oat bg-clay-white flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-oat">
-        <h3 className="text-sm font-semibold">Words ({items.length})</h3>
-        <button onClick={onClose} className="clay-btn-white !p-1.5 !rounded-[8px]">✕</button>
-      </div>
-
+    <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-oat space-y-2">
         <input
           type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
           placeholder="Search words…"
           className="w-full px-2.5 py-1.5 text-xs rounded-[8px] border border-oat bg-clay-white"
+          aria-label="Search saved words"
         />
         <div className="flex gap-1.5 text-xs">
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="flex-1 px-2 py-1 rounded-[6px] border border-oat bg-clay-white">
+          <select
+            value={sortKey}
+            onChange={(event) => setSortKey(event.target.value as WordsSortKey)}
+            className="flex-1 px-2 py-1 rounded-[6px] border border-oat bg-clay-white"
+            aria-label="Sort words"
+          >
             <option value="recent">Recent</option>
             <option value="alpha">A–Z</option>
             <option value="seen">Most seen</option>
             <option value="due">Due first</option>
           </select>
-          <select value={scope} onChange={(e) => setScope(e.target.value as "all" | "book")} className="flex-1 px-2 py-1 rounded-[6px] border border-oat bg-clay-white">
+          <select
+            value={scope}
+            onChange={(event) => setScope(event.target.value as WordsScope)}
+            className="flex-1 px-2 py-1 rounded-[6px] border border-oat bg-clay-white"
+            aria-label="Word scope"
+          >
             <option value="all">All books</option>
             <option value="book" disabled={!currentBookHash}>This book</option>
           </select>
         </div>
         <div className="flex gap-1.5">
-          <button
-            onClick={onReview}
-            disabled={dueCount === 0}
-            className="flex-1 clay-btn-solid text-xs !py-1.5 disabled:opacity-50"
-          >
+          <button onClick={onReview} disabled={dueCount === 0} className="flex-1 clay-btn-solid text-xs !py-1.5 disabled:opacity-50">
             Review {dueCount > 0 && `(${dueCount})`}
           </button>
           <button onClick={onQuiz} disabled={items.length === 0} className="flex-1 clay-btn-white text-xs !py-1.5 disabled:opacity-50">
@@ -113,62 +128,61 @@ export default function WordsPanel({ items, currentBookHash, dueCount, onClose, 
           </button>
         </div>
       </div>
-
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5">
         {filtered.length === 0 && (
           <p className="text-xs text-silver text-center py-6">
             {items.length === 0 ? "No saved words yet — click Define on any word to start." : "No words match."}
           </p>
         )}
-        {filtered.map((w) => {
-          const isOpen = expanded.has(w.id);
-          const isSel = selected.has(w.id);
-          const stageLabel = w.mastered ? "✓ Mastered" : `Stage ${w.stage}`;
+        {filtered.map((word) => {
+          const isOpen = expandedIds.has(word.id);
+          const isSelected = selectedIds.has(word.id);
+          const stageLabel = word.mastered ? "✓ Mastered" : `Stage ${word.stage}`;
           return (
-            <div key={w.id} className="clay-card !p-2 text-xs">
+            <div key={word.id} className="clay-card !p-2 text-xs">
               <div className="flex items-start gap-2">
                 <input
                   type="checkbox"
-                  checked={isSel}
-                  onChange={() => toggleSelect(w.id)}
+                  checked={isSelected}
+                  onChange={() => toggleSelectId(word.id)}
                   className="mt-1"
                 />
-                <button onClick={() => toggleExpand(w.id)} className="flex-1 text-left min-w-0">
+                <button onClick={() => toggleExpandId(word.id)} className="flex-1 text-left min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold truncate">{w.word}</span>
-                    {w.phonetic && <span className="text-silver text-[10px]">{w.phonetic}</span>}
+                    <span className="font-semibold truncate">{word.word}</span>
+                    {word.phonetic && <span className="text-silver text-[10px]">{word.phonetic}</span>}
                   </div>
-                  <p className="text-silver text-[11px] truncate mt-0.5">{w.definitions[0]?.definition ?? ""}</p>
+                  <p className="text-silver text-[11px] truncate mt-0.5">{word.definitions[0]?.definition ?? ""}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] text-silver">
-                      Seen {w.contexts.length}× in {new Set(w.contexts.map((c) => c.bookHash)).size}
+                      Seen {word.contexts.length}× in {new Set(word.contexts.map((c) => c.bookHash)).size}
                     </span>
                     <span className="text-[10px] text-silver">·</span>
                     <span className="text-[10px] text-silver">{stageLabel}</span>
                   </div>
                 </button>
-                <AudioButton text={w.word} url={w.audioUrl} size={12} />
+                <AudioButton text={word.word} url={word.audioUrl} size={12} />
               </div>
               {isOpen && (
                 <div className="pt-2 mt-2 border-t border-oat space-y-1.5">
-                  {w.definitions.map((d, i) => (
-                    <div key={i}>
-                      <p className="text-silver italic text-[10px]">{d.partOfSpeech}</p>
-                      <p>{d.definition}</p>
-                      {d.example && <p className="text-silver italic">"{d.example}"</p>}
+                  {word.definitions.map((def, index) => (
+                    <div key={index}>
+                      <p className="text-silver italic text-[10px]">{def.partOfSpeech}</p>
+                      <p>{def.definition}</p>
+                      {def.example && <p className="text-silver italic">"{def.example}"</p>}
                     </div>
                   ))}
                   <div className="pt-1.5 border-t border-oat">
                     <p className="text-[10px] font-medium text-silver mb-1">Contexts</p>
-                    {w.contexts.map((c, i) => (
-                      <p key={i} className="text-[11px] mb-0.5">
-                        <span className="text-silver">[{c.bookTitle}, ch.{c.chapterIndex + 1}]</span> …{c.sentence}…
+                    {word.contexts.map((context, index) => (
+                      <p key={index} className="text-[11px] mb-0.5">
+                        <span className="text-silver">[{context.bookTitle}, ch.{context.chapterIndex + 1}]</span> …{context.sentence}…
                       </p>
                     ))}
                   </div>
                   <div className="flex justify-end gap-1.5 pt-1">
-                    <button onClick={() => onResetStage(w.id)} className="text-[10px] text-silver hover:text-clay-black">↻ Reset</button>
-                    <button onClick={() => onDelete(w.id)} className="text-[10px] text-pomegranate-400">🗑 Delete</button>
+                    <button onClick={() => onResetStage(word.id)} className="text-[10px] text-silver hover:text-clay-black">↻ Reset</button>
+                    <button onClick={() => onDelete(word.id)} className="text-[10px] text-pomegranate-400">🗑 Delete</button>
                   </div>
                 </div>
               )}
@@ -176,10 +190,9 @@ export default function WordsPanel({ items, currentBookHash, dueCount, onClose, 
           );
         })}
       </div>
-
-      {selected.size > 0 && (
+      {selectedIds.size > 0 && (
         <div className="border-t border-oat px-3 py-2 flex items-center justify-between bg-cream">
-          <span className="text-xs">{selected.size} selected</span>
+          <span className="text-xs">{selectedIds.size} selected</span>
           <button onClick={bulkDelete} className="text-xs text-pomegranate-400 font-medium">Delete</button>
         </div>
       )}

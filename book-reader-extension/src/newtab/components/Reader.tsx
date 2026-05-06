@@ -12,6 +12,7 @@ interface ReaderProps {
   book: LoadedBook;
   position: ReadingPosition | null;
   settings: ReaderSettings;
+  onSettingsChange: (next: ReaderSettings) => void;
   highlights: Highlight[];
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction: (
@@ -21,6 +22,16 @@ interface ReaderProps {
   onHighlightClick: (id: string, rect: DOMRect) => void;
   hasExplain: boolean;
   aiAvailable: boolean;
+  /**
+   * Anchor id (no leading "#") to scroll to inside the prose container after
+   * the next chapter render. App.tsx owns this state — see `goToTocNode`.
+   */
+  pendingFragment?: string | null;
+  /**
+   * Reader calls this after attempting (or skipping) the fragment scroll so
+   * App.tsx can null out `pendingFragment` and avoid re-firing.
+   */
+  onPendingFragmentConsumed?: () => void;
 }
 
 function estimateReadingTime(text: string): number {
@@ -40,7 +51,8 @@ function cleanChapterLabel(label: string): string {
 }
 
 export default function Reader({
-  book, position, settings, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain, aiAvailable,
+  book, position, settings, onSettingsChange, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain, aiAvailable,
+  pendingFragment = null, onPendingFragmentConsumed,
 }: ReaderProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const proseRef = useRef<HTMLDivElement>(null);
@@ -100,6 +112,33 @@ export default function Reader({
       if (proseRef.current) clearHighlights(proseRef.current);
     };
   }, [content, highlights, plainText, chapterIndex, book.format, onHighlightClick]);
+
+  // After content renders, scroll to the requested fragment (TOC deep-link).
+  useEffect(() => {
+    if (book.format === "pdf") return;
+    if (!pendingFragment) return;
+    if (!onPendingFragmentConsumed) return;
+    const handle = requestAnimationFrame(() => {
+      const proseElement = proseRef.current;
+      if (!proseElement) {
+        onPendingFragmentConsumed();
+        return;
+      }
+      let target: Element | null = proseElement.ownerDocument.getElementById(pendingFragment);
+      if (target && !proseElement.contains(target)) target = null;
+      if (!target) {
+        const escaped = (typeof CSS !== "undefined" && CSS.escape)
+          ? CSS.escape(pendingFragment)
+          : pendingFragment.replace(/[^a-zA-Z0-9_-]/g, "");
+        target = proseElement.querySelector(`[name="${escaped}"]`);
+      }
+      if (target instanceof HTMLElement) {
+        target.scrollIntoView({ block: "start" });
+      }
+      onPendingFragmentConsumed();
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [pendingFragment, content, book.format, onPendingFragmentConsumed]);
 
   const handleScroll = useCallback(() => {
     if (!contentRef.current) return;
@@ -172,6 +211,7 @@ export default function Reader({
         initialPage={position.chapterIndex + 1}
         initialScrollOffset={position.scrollOffset}
         settings={settings}
+        onSettingsChange={onSettingsChange}
         onPositionChange={onPositionChange}
         onSelectionAction={onSelectionAction}
         hasExplain={hasExplain}
@@ -263,7 +303,7 @@ export default function Reader({
               <input
                 type="range" min={0} max={Math.max(totalSections - 1, 1)} value={chapterIndex}
                 onChange={(e) => goToChapter(Number(e.target.value))}
-                className="w-44 accent-[#078a52]"
+                className="w-44 accent-matcha-600"
               />
               <button
                 onClick={() => goToChapter(chapterIndex + 1)}

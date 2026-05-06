@@ -34,24 +34,72 @@ if (typeof Range !== "undefined") {
 }
 
 // Stub chrome.* surface used by lib/storage.ts
+type ChromeChangeListener = (
+  changes: Record<string, { newValue?: unknown; oldValue?: unknown }>,
+  areaName: string,
+) => void;
+
+const onChangedListeners: ChromeChangeListener[] = [];
+
 const chromeStub = {
   storage: {
     local: {
       _store: {} as Record<string, unknown>,
-      async get(key: string | string[]) {
+      async get(key: string | string[] | null) {
+        const store = (chromeStub.storage.local as any)._store as Record<string, unknown>;
+        if (key === null) {
+          return { ...store };
+        }
         const keys = Array.isArray(key) ? key : [key];
         const out: Record<string, unknown> = {};
         for (const k of keys) {
-          if (k in (chromeStub.storage.local as any)._store) {
-            out[k] = (chromeStub.storage.local as any)._store[k];
+          if (k in store) {
+            out[k] = store[k];
           }
         }
         return out;
       },
       async set(items: Record<string, unknown>) {
-        Object.assign((chromeStub.storage.local as any)._store, items);
+        const store = (chromeStub.storage.local as any)._store as Record<string, unknown>;
+        const changes: Record<string, { newValue?: unknown; oldValue?: unknown }> = {};
+        for (const [key, value] of Object.entries(items)) {
+          changes[key] = { oldValue: store[key], newValue: value };
+          store[key] = value;
+        }
+        for (const listener of onChangedListeners) {
+          listener(changes, "local");
+        }
+      },
+      async remove(key: string | string[]) {
+        const store = (chromeStub.storage.local as any)._store as Record<string, unknown>;
+        const keys = Array.isArray(key) ? key : [key];
+        const changes: Record<string, { newValue?: unknown; oldValue?: unknown }> = {};
+        for (const k of keys) {
+          if (k in store) {
+            changes[k] = { oldValue: store[k], newValue: undefined };
+            delete store[k];
+          }
+        }
+        for (const listener of onChangedListeners) {
+          listener(changes, "local");
+        }
+      },
+    },
+    onChanged: {
+      addListener(listener: ChromeChangeListener) {
+        onChangedListeners.push(listener);
+      },
+      removeListener(listener: ChromeChangeListener) {
+        const idx = onChangedListeners.indexOf(listener);
+        if (idx >= 0) onChangedListeners.splice(idx, 1);
       },
     },
   },
 };
 (globalThis as any).chrome = chromeStub;
+
+/** Test helper: wipe the chrome.storage.local stub between tests. */
+export function resetChromeStorageStub(): void {
+  (chromeStub.storage.local as any)._store = {};
+  onChangedListeners.length = 0;
+}

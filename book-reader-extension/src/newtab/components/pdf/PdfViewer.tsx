@@ -1,14 +1,15 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { usePdfDocument } from "./usePdfDocument";
 import PdfToolbar from "./PdfToolbar";
-import PdfThumbnails from "./PdfThumbnails";
+import PdfThumbnailStrip from "./PdfThumbnailStrip";
 import PdfSingleView from "./PdfSingleView";
 import PdfContinuousView from "./PdfContinuousView";
 import PdfSpreadView from "./PdfSpreadView";
-import { ReaderSettings, saveSettings } from "../../lib/storage";
+import { ReaderSettings } from "../../lib/storage";
 import { useSelection } from "../../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "../SelectionToolbar";
 import { findOverlappingHighlights, offsetsFromRange } from "../../lib/highlights/anchor";
+import { useActiveThemePdfTint } from "../../hooks/useActiveThemePdfTint";
 
 export type PdfViewMode = "single" | "continuous" | "spread";
 export type PdfColorMode = "normal" | "dark" | "sepia";
@@ -18,6 +19,7 @@ interface PdfViewerProps {
   initialPage: number;
   initialScrollOffset: number;
   settings: ReaderSettings;
+  onSettingsChange: (next: ReaderSettings) => void;
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction?: (
     action: ToolbarAction,
@@ -33,15 +35,25 @@ const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.05;
 
-export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onPositionChange, onSelectionAction, hasExplain = false, aiAvailable = false, highlights = [], onHighlightClick }: PdfViewerProps) {
+export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, settings, onSettingsChange, onPositionChange, onSelectionAction, hasExplain = false, aiAvailable = false, highlights = [], onHighlightClick }: PdfViewerProps) {
   const { pdfDoc, totalPages, loading, error } = usePdfDocument(bookHash);
 
   const startPage = Math.max(1, initialPage);
   const [currentPage, setCurrentPage] = useState(startPage);
   const [zoom, setZoom] = useState(1);
-  const [viewMode, setViewMode] = useState<PdfViewMode>(settings.pdfViewMode ?? "continuous");
-  const [colorMode, setColorMode] = useState<PdfColorMode>(settings.pdfColorMode ?? "normal");
-  const [showThumbnails, setShowThumbnails] = useState(settings.pdfShowThumbnails ?? false);
+
+  // View mode and thumbnail visibility are derived directly from the settings prop.
+  // Persisted state lives in App; this component never mutates settings without going
+  // through onSettingsChange, so the prop is always the single source of truth.
+  const viewMode: PdfViewMode = settings.pdfViewMode ?? "continuous";
+  const showThumbnailStrip: boolean = settings.pdfShowThumbnailStrip ?? false;
+
+  // PDF tint resolution per spec §1.6:
+  //   effectiveTint = settings.pdfTintOverride ?? activeTheme.pdfTint
+  // The active theme's pdfTint is exposed via the `--pdf-tint` CSS var (set by applyTheme);
+  // useActiveThemePdfTint reads it and re-reads when the html element's data-theme/style/class changes.
+  const activeThemePdfTint = useActiveThemePdfTint();
+  const colorMode: PdfColorMode = settings.pdfTintOverride ?? activeThemePdfTint;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -53,12 +65,6 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
   const currentScrollRatioRef = useRef(initialScrollOffset);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-
-  useEffect(() => {
-    setViewMode(settings.pdfViewMode ?? "continuous");
-    setColorMode(settings.pdfColorMode ?? "normal");
-    setShowThumbnails(settings.pdfShowThumbnails ?? false);
-  }, [settings.pdfViewMode, settings.pdfColorMode, settings.pdfShowThumbnails]);
 
   const savePage = useCallback(
     (page: number, scrollRatio?: number) => {
@@ -99,22 +105,22 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
   const zoomReset = useCallback(() => setZoom(1), []);
 
   const handleViewModeChange = useCallback((mode: PdfViewMode) => {
-    setViewMode(mode);
-    saveSettings({ ...settingsRef.current, pdfViewMode: mode });
-  }, []);
+    onSettingsChange({ ...settingsRef.current, pdfViewMode: mode });
+  }, [onSettingsChange]);
 
   const handleColorModeChange = useCallback((mode: PdfColorMode) => {
-    setColorMode(mode);
-    saveSettings({ ...settingsRef.current, pdfColorMode: mode });
-  }, []);
+    // Per spec §1.6 the in-PDF toolbar persists an EXPLICIT override — including "normal".
+    // The "Override theme PDF tint" toggle in Settings → PDF tab owns the null state
+    // (toggle off → null → use active theme's tint). Collapsing "normal" to null here
+    // would mean a user who picks Normal in the toolbar under a Sepia theme can never
+    // actually force normal pages.
+    onSettingsChange({ ...settingsRef.current, pdfTintOverride: mode });
+  }, [onSettingsChange]);
 
-  const handleToggleThumbnails = useCallback(() => {
-    setShowThumbnails((prev) => {
-      const next = !prev;
-      saveSettings({ ...settingsRef.current, pdfShowThumbnails: next });
-      return next;
-    });
-  }, []);
+  const handleToggleThumbnailStrip = useCallback(() => {
+    const nextValue = !settingsRef.current.pdfShowThumbnailStrip;
+    onSettingsChange({ ...settingsRef.current, pdfShowThumbnailStrip: nextValue });
+  }, [onSettingsChange]);
 
   const selection = useSelection(containerEl);
 
@@ -228,7 +234,7 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
         zoom={zoom}
         viewMode={viewMode}
         colorMode={colorMode}
-        showThumbnails={showThumbnails}
+        showThumbnailStrip={showThumbnailStrip}
         showViewMode={settings.pdfShowViewMode ?? true}
         showPageNav={settings.pdfShowPageNav ?? true}
         showColorMode={settings.pdfShowColorMode ?? true}
@@ -239,25 +245,25 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
         onZoomReset={zoomReset}
         onViewModeChange={handleViewModeChange}
         onColorModeChange={handleColorModeChange}
-        onToggleThumbnails={handleToggleThumbnails}
+        onToggleThumbnailStrip={handleToggleThumbnailStrip}
         zoomMin={ZOOM_MIN}
         zoomMax={ZOOM_MAX}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {showThumbnails && (
-          <PdfThumbnails
-            pdfDoc={pdfDoc}
-            totalPages={totalPages}
-            currentPage={currentPage}
-            onPageSelect={goToPage}
-          />
-        )}
-
         {viewMode === "single" && <PdfSingleView {...viewProps} />}
         {viewMode === "continuous" && <PdfContinuousView {...viewProps} />}
         {viewMode === "spread" && <PdfSpreadView {...viewProps} />}
       </div>
+
+      {showThumbnailStrip && (
+        <PdfThumbnailStrip
+          pdfDoc={pdfDoc}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onJumpToPage={goToPage}
+        />
+      )}
 
       {selection && (
         <SelectionToolbar
