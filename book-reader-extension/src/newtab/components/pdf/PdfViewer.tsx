@@ -8,6 +8,7 @@ import PdfSpreadView from "./PdfSpreadView";
 import { ReaderSettings } from "../../lib/storage";
 import { useSelection } from "../../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "../SelectionToolbar";
+import SelectionOverlay from "../SelectionOverlay";
 import { findOverlappingHighlights, offsetsFromRange } from "../../lib/highlights/anchor";
 import { useActiveThemePdfTint } from "../../hooks/useActiveThemePdfTint";
 
@@ -266,14 +267,17 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
       )}
 
       {selection && (
-        <SelectionToolbar
-          overlappingHighlightIds={overlappingHighlightIds}
-          rect={selection.rect}
-          hasExplain={hasExplain}
-          aiAvailable={aiAvailable}
-          isPdf={true}
-          onAction={dispatchAction}
-        />
+        <>
+          <SelectionOverlay rects={selection.rects} />
+          <SelectionToolbar
+            overlappingHighlightIds={overlappingHighlightIds}
+            rect={selection.rect}
+            hasExplain={hasExplain}
+            aiAvailable={aiAvailable}
+            isPdf={true}
+            onAction={dispatchAction}
+          />
+        </>
       )}
     </div>
   );

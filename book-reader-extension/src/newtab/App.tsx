@@ -86,6 +86,7 @@ export default function App() {
   const highlights = useHighlights(currentBook?.hash ?? null);
   const vocab = useVocab();
   const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(null);
+  const currentChapterIndex = position?.chapterIndex ?? 0;
 
   /**
    * Tracks whether the persisted-settings load has completed. Until it has,
@@ -178,7 +179,7 @@ export default function App() {
       jumpToChapter(node.spineIndex, node.fragment);
       panel.closeLeftPanel();
     },
-    [jumpToChapter, panel],
+    [jumpToChapter, panel.closeLeftPanel],
   );
 
   const onPendingFragmentConsumed = useCallback(() => setPendingFragment(null), []);
@@ -277,12 +278,13 @@ export default function App() {
         return;
       }
     },
-    [currentBook, settings.translateTo, highlights, panel],
+    [currentBook, settings.translateTo, highlights.create, highlights.remove, panel.openRightPanel],
   );
 
+  const hasPosition = position !== null;
   const getCurrentChapterText = useCallback((): string => {
-    if (!currentBook || !position) return "";
-    const idx = position.chapterIndex;
+    if (!currentBook || !hasPosition) return "";
+    const idx = currentChapterIndex;
     if (currentBook.format === "epub" && currentBook.epub) return currentBook.epub.chapters[idx]?.content ?? "";
     if (currentBook.format === "pdf") {
       const pageWrappers = document.querySelectorAll<HTMLElement>(".pdf-page-wrapper[data-page]");
@@ -295,7 +297,7 @@ export default function App() {
     }
     if (currentBook.format === "txt" && currentBook.txt) return currentBook.txt.chunks[idx] ?? "";
     return "";
-  }, [currentBook, position]);
+  }, [currentBook, currentChapterIndex, hasPosition]);
 
   const currentChapterText = useMemo(() => getCurrentChapterText(), [getCurrentChapterText]);
   const readingTimeMinutes = useMemo(() => {
@@ -306,6 +308,9 @@ export default function App() {
 
   const closeTopBar = useCallback(() => setTopBarExpanded(false), []);
   const expandTopBar = useCallback(() => setTopBarExpanded(true), []);
+  const handleHighlightClick = useCallback((id: string, rect: DOMRect) => {
+    setEditing({ id, rect });
+  }, []);
 
   // ── Bootstrap spinner ──
   if (!bootstrapped) {
@@ -361,7 +366,7 @@ export default function App() {
   const leftPanelContent = renderLeftPanelContent({
     activePanelId: panel.panelState.left,
     book: currentBook,
-    chapterIndex: position?.chapterIndex ?? 0,
+    chapterIndex: currentChapterIndex,
     library,
     progressByHash,
     onJumpToTocNode: goToTocNode,
@@ -419,7 +424,7 @@ export default function App() {
             highlights={highlights.items}
             onPositionChange={handlePositionChange}
             onSelectionAction={handleSelectionAction}
-            onHighlightClick={(id, rect) => setEditing({ id, rect })}
+            onHighlightClick={handleHighlightClick}
             hasExplain={ai.available}
             aiAvailable={ai.available}
             pendingFragment={pendingFragment}

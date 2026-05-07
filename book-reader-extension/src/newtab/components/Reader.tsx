@@ -4,6 +4,7 @@ import { ReadingPosition, ReaderSettings } from "../lib/storage";
 import PdfViewer from "./pdf/PdfViewer";
 import { useSelection } from "../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "./SelectionToolbar";
+import SelectionOverlay from "./SelectionOverlay";
 import { Highlight } from "../lib/highlights/types";
 import { renderHighlights, clearHighlights } from "../lib/highlights/render";
 import { findOverlappingHighlights, offsetsFromRange } from "../lib/highlights/anchor";
@@ -50,7 +51,7 @@ function cleanChapterLabel(label: string): string {
   return label.trim();
 }
 
-export default function Reader({
+function Reader({
   book, position, settings, onSettingsChange, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain, aiAvailable,
   pendingFragment = null, onPendingFragmentConsumed,
 }: ReaderProps) {
@@ -323,8 +324,13 @@ export default function Reader({
       </div>
 
       {selection && (
-        <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} aiAvailable={aiAvailable} overlappingHighlightIds={overlappingHighlightIds} onAction={dispatchAction} />
+        <>
+          <SelectionOverlay rects={selection.rects} />
+          <SelectionToolbar rect={selection.rect} hasExplain={hasExplain} aiAvailable={aiAvailable} overlappingHighlightIds={overlappingHighlightIds} onAction={dispatchAction} />
+        </>
       )}
     </div>
   );
 }
+
+export default React.memo(Reader);

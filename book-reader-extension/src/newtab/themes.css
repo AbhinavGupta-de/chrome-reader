@@ -15,6 +15,9 @@
   --charcoal: #55534e;
   --light-frost: #eff1f3;
   --reader-prose-bg: transparent;
+  --reader-selection-bg: rgba(59, 211, 253, 0.46);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(0, 137, 173, 0.55);
 }
 
 /* ── Dark (lifted verbatim from the old .dark block in index.css) ── */
@@ -30,6 +33,9 @@
   --cool-border: #3d3a35;
   --light-frost: #2e2b27;
   --reader-prose-bg: transparent;
+  --reader-selection-bg: rgba(132, 231, 165, 0.34);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(132, 231, 165, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -49,6 +55,9 @@
   --charcoal: #6c5840;
   --light-frost: #ebe0c4;
   --reader-prose-bg: #f4ecd8;
+  --reader-selection-bg: rgba(208, 138, 17, 0.28);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(208, 138, 17, 0.48);
 }
 
 /* ── Solarized Light ── */
@@ -61,6 +70,9 @@
   --silver: #93a1a1;
   --charcoal: #586e75;
   --light-frost: #eee8d5;
+  --reader-selection-bg: rgba(42, 161, 152, 0.3);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(42, 161, 152, 0.5);
 }
 
 /* ── Solarized Dark ── */
@@ -75,6 +87,9 @@
   --dark-charcoal: #93a1a1;
   --cool-border: #586e75;
   --light-frost: #073642;
+  --reader-selection-bg: rgba(38, 139, 210, 0.36);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(38, 139, 210, 0.58);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -97,6 +112,9 @@
   --light-frost: #434c5e;
   --matcha-600: #88c0d0;
   --ube-800: #b48ead;
+  --reader-selection-bg: rgba(136, 192, 208, 0.36);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(136, 192, 208, 0.56);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -115,6 +133,9 @@
   --silver: #928374;
   --charcoal: #504945;
   --light-frost: #ebdbb2;
+  --reader-selection-bg: rgba(184, 187, 38, 0.35);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(184, 187, 38, 0.55);
 }
 
 /* ── Gruvbox Dark ── */
@@ -130,6 +151,9 @@
   --cool-border: #504945;
   --light-frost: #32302f;
   --matcha-600: #b8bb26;
+  --reader-selection-bg: rgba(250, 189, 47, 0.34);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(250, 189, 47, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -153,6 +177,9 @@
   --matcha-600: #50fa7b;
   --pomegranate-400: #ff5555;
   --ube-800: #bd93f9;
+  --reader-selection-bg: rgba(255, 121, 198, 0.34);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(255, 121, 198, 0.56);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -174,6 +201,9 @@
   --cool-border: #414868;
   --light-frost: #1f2335;
   --matcha-600: #9ece6a;
+  --reader-selection-bg: rgba(122, 162, 247, 0.36);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(122, 162, 247, 0.58);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -192,6 +222,9 @@
   --silver: #999999;
   --charcoal: #555555;
   --light-frost: #f5f5f5;
+  --reader-selection-bg: rgba(20, 110, 245, 0.22);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(20, 110, 245, 0.42);
 }
 
 /* ── E-Ink (grayscale-only) ── */
@@ -206,6 +239,9 @@
   --light-frost: #e8e8e8;
   --matcha-600: #404040;
   --ube-800: #404040;
+  --reader-selection-bg: rgba(64, 64, 64, 0.22);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(64, 64, 64, 0.45);
 }
 
 /* ── Rosé Pine ── */
@@ -222,6 +258,9 @@
   --light-frost: #26233a;
   --matcha-600: #9ccfd8;
   --ube-800: #c4a7e7;
+  --reader-selection-bg: rgba(235, 111, 146, 0.34);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(235, 111, 146, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -240,6 +279,9 @@
   --silver: #6c6f85;
   --charcoal: #5c5f77;
   --light-frost: #ccd0da;
+  --reader-selection-bg: rgba(30, 102, 245, 0.23);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(30, 102, 245, 0.44);
 }
 
 /* ── Catppuccin Mocha ── */
@@ -255,6 +297,9 @@
   --cool-border: #45475a;
   --light-frost: #181825;
   --matcha-600: #a6e3a1;
+  --reader-selection-bg: rgba(137, 180, 250, 0.34);
+  --reader-selection-text: var(--black);
+  --reader-selection-ring: rgba(137, 180, 250, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
