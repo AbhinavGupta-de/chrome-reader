@@ -43,7 +43,6 @@
   --reader-prose-bg: transparent;
   --reader-selection-bg: rgba(59, 211, 253, 0.46);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(0, 137, 173, 0.55);
   --pdf-tint: normal;
 }
 
@@ -98,10 +97,18 @@ html, body, #root {
   color: var(--reader-selection-text);
 }
 
-.reader-selection-overlay {
-  background: var(--reader-selection-bg);
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px var(--reader-selection-ring);
+html.reader-sticky-selection-active ::selection {
+  background-color: transparent;
+  color: inherit;
+}
+
+html.reader-sticky-selection-active .textLayer ::selection {
+  background: transparent;
+}
+
+.reader-active-selection-mark {
+  background-color: var(--reader-selection-bg);
+  color: var(--reader-selection-text);
 }
 
 /* Scrollbar */

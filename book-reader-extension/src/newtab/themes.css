@@ -17,7 +17,6 @@
   --reader-prose-bg: transparent;
   --reader-selection-bg: rgba(59, 211, 253, 0.46);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(0, 137, 173, 0.55);
 }
 
 /* ── Dark (lifted verbatim from the old .dark block in index.css) ── */
@@ -35,7 +34,6 @@
   --reader-prose-bg: transparent;
   --reader-selection-bg: rgba(132, 231, 165, 0.34);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(132, 231, 165, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -57,7 +55,6 @@
   --reader-prose-bg: #f4ecd8;
   --reader-selection-bg: rgba(208, 138, 17, 0.28);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(208, 138, 17, 0.48);
 }
 
 /* ── Solarized Light ── */
@@ -72,7 +69,6 @@
   --light-frost: #eee8d5;
   --reader-selection-bg: rgba(42, 161, 152, 0.3);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(42, 161, 152, 0.5);
 }
 
 /* ── Solarized Dark ── */
@@ -89,7 +85,6 @@
   --light-frost: #073642;
   --reader-selection-bg: rgba(38, 139, 210, 0.36);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(38, 139, 210, 0.58);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -114,7 +109,6 @@
   --ube-800: #b48ead;
   --reader-selection-bg: rgba(136, 192, 208, 0.36);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(136, 192, 208, 0.56);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -135,7 +129,6 @@
   --light-frost: #ebdbb2;
   --reader-selection-bg: rgba(184, 187, 38, 0.35);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(184, 187, 38, 0.55);
 }
 
 /* ── Gruvbox Dark ── */
@@ -153,7 +146,6 @@
   --matcha-600: #b8bb26;
   --reader-selection-bg: rgba(250, 189, 47, 0.34);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(250, 189, 47, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -179,7 +171,6 @@
   --ube-800: #bd93f9;
   --reader-selection-bg: rgba(255, 121, 198, 0.34);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(255, 121, 198, 0.56);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -203,7 +194,6 @@
   --matcha-600: #9ece6a;
   --reader-selection-bg: rgba(122, 162, 247, 0.36);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(122, 162, 247, 0.58);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -224,7 +214,6 @@
   --light-frost: #f5f5f5;
   --reader-selection-bg: rgba(20, 110, 245, 0.22);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(20, 110, 245, 0.42);
 }
 
 /* ── E-Ink (grayscale-only) ── */
@@ -241,7 +230,6 @@
   --ube-800: #404040;
   --reader-selection-bg: rgba(64, 64, 64, 0.22);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(64, 64, 64, 0.45);
 }
 
 /* ── Rosé Pine ── */
@@ -260,7 +248,6 @@
   --ube-800: #c4a7e7;
   --reader-selection-bg: rgba(235, 111, 146, 0.34);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(235, 111, 146, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,
@@ -281,7 +268,6 @@
   --light-frost: #ccd0da;
   --reader-selection-bg: rgba(30, 102, 245, 0.23);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(30, 102, 245, 0.44);
 }
 
 /* ── Catppuccin Mocha ── */
@@ -299,7 +285,6 @@
   --matcha-600: #a6e3a1;
   --reader-selection-bg: rgba(137, 180, 250, 0.34);
   --reader-selection-text: var(--black);
-  --reader-selection-ring: rgba(137, 180, 250, 0.55);
 
   --shadow-clay: rgba(0, 0, 0, 0.25) 0px 1px 1px,
     rgba(255, 255, 255, 0.03) 0px -1px 1px inset,

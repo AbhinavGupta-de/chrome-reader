@@ -47,7 +47,7 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
   return (
     <div
       data-selection-toolbar
-      className="fixed z-50 -translate-x-1/2 clay-card flex items-center gap-1 !rounded-[1584px] px-2 py-1 shadow-md pointer-events-none"
+      className="fixed z-50 -translate-x-1/2 clay-card flex items-center gap-1 !rounded-[1584px] px-2 py-1 shadow-md pointer-events-none select-none"
       style={{ top, left }}
     >
       {showColors ? (

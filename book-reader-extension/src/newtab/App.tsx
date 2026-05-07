@@ -34,6 +34,7 @@ import { buildAnchor, offsetsFromRange } from "./lib/highlights/anchor";
 import { useVocab } from "./hooks/useVocab";
 import { VocabContext, VocabDefinition } from "./lib/vocab/types";
 import type { TocNode } from "./lib/parsers/epub";
+import type { SelectionOffsets } from "./hooks/useSelection";
 
 const READING_WORDS_PER_MINUTE = 230;
 
@@ -185,7 +186,7 @@ export default function App() {
   const onPendingFragmentConsumed = useCallback(() => setPendingFragment(null), []);
 
   const handleSelectionAction = useCallback(
-    (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }) => {
+    (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; offsets?: SelectionOffsets; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }) => {
       setSelectedText(p.text);
       if (action === "remove_highlight") {
         const ids = p.highlightIds ?? [];
@@ -270,7 +271,7 @@ export default function App() {
         const proseEl = (p.range.commonAncestorContainer.parentElement?.closest(".prose-reader")
           ?? document.querySelector(".prose-reader")) as HTMLElement | null;
         if (!proseEl) return;
-        const offs = offsetsFromRange(proseEl, p.range);
+        const offs = p.offsets ?? offsetsFromRange(proseEl, p.range);
         if (!offs) return;
         const anchor = buildAnchor(p.chapterText, offs.startOffset, offs.length, p.chapterIndex);
         highlights.create(p.text, color, anchor);
