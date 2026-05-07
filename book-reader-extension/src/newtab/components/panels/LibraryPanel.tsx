@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { BookMetadata } from "../../lib/storage";
+import Tooltip from "../Tooltip";
 import {
   buildLibraryEntries,
   filterBySearch,
@@ -263,32 +264,34 @@ function LibraryRow({
                 onDelete(meta.hash);
                 onConfirmDelete(null);
               }}
-              className="px-2 py-1 text-[10px] rounded-[6px] bg-pomegranate-400 text-white font-medium"
+              className="clay-btn-ghost danger !text-[10px] !py-1 !px-2 bg-pomegranate-400 !text-white !rounded-[8px]"
             >
               Delete
             </button>
             <button
               type="button"
               onClick={() => onConfirmDelete(null)}
-              className="px-2 py-1 text-[10px] rounded-[6px] text-silver hover:bg-frost"
+              className="clay-btn-ghost !text-[10px] !py-1 !px-2"
             >
               Cancel
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            aria-label={`Delete ${meta.title}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onConfirmDelete(meta.hash);
-            }}
-            className="p-1.5 rounded-[6px] text-silver opacity-0 group-hover:opacity-100 hover:text-pomegranate-400 hover:bg-pomegranate-400/10 transition-all"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2.5 3h7M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M8 5v4.5a1 1 0 01-1 1H5a1 1 0 01-1-1V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-          </button>
+          <Tooltip label="Delete book" position="left">
+            <button
+              type="button"
+              aria-label={`Delete ${meta.title}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onConfirmDelete(meta.hash);
+              }}
+              className="clay-btn-icon !p-1.5 opacity-0 group-hover:opacity-100"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 3h7M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M8 5v4.5a1 1 0 01-1 1H5a1 1 0 01-1-1V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+            </button>
+          </Tooltip>
         )}
       </div>
     </li>

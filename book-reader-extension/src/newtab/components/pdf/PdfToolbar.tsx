@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { PdfViewMode, PdfColorMode } from "./PdfViewer";
+import Tooltip from "../Tooltip";
 
 interface PdfToolbarProps {
   currentPage: number;
@@ -125,17 +126,18 @@ export default function PdfToolbar({
   return (
     <div className="flex items-center px-3 py-2 border-b border-oat flex-shrink-0">
       {/* Thumbnail strip toggle - pinned left */}
-      <button
-        onClick={onToggleThumbnailStrip}
-        className={`clay-btn-white !p-1.5 !rounded-[8px] transition-colors flex-shrink-0 ${showThumbnailStrip ? "!bg-matcha-600/10 !border-matcha-600" : ""}`}
-        title="Toggle thumbnail strip"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="1" y="1" width="4" height="5" rx="0.5" />
-          <rect x="1" y="8" width="4" height="5" rx="0.5" />
-          <path d="M7.5 3h5M7.5 7h5M7.5 11h5" />
-        </svg>
-      </button>
+      <Tooltip label="Toggle thumbnails" position="bottom">
+        <button
+          onClick={onToggleThumbnailStrip}
+          className={`clay-btn-icon !p-1.5 flex-shrink-0 ${showThumbnailStrip ? "active" : ""}`}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="1" width="4" height="5" rx="0.5" />
+            <rect x="1" y="8" width="4" height="5" rx="0.5" />
+            <path d="M7.5 3h5M7.5 7h5M7.5 11h5" />
+          </svg>
+        </button>
+      </Tooltip>
 
       {/* Centered controls — build visible sections array, render dividers between them */}
       <div className="flex-1 flex items-center justify-center gap-2 flex-wrap">
@@ -144,20 +146,16 @@ export default function PdfToolbar({
 
         if (showViewMode) {
           sections.push(
-            <div key="vm" className="flex items-center bg-oat/40 rounded-[8px] p-0.5 gap-0.5">
+            <div key="vm" className="clay-segmented flex items-center bg-oat/40 rounded-[12px] p-0.5 gap-0.5">
               {VIEW_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => onViewModeChange(m.id)}
-                  className={`p-1.5 rounded-[6px] transition-all ${
-                    viewMode === m.id
-                      ? "bg-clay-white shadow-sm text-clay-black"
-                      : "text-silver hover:text-clay-black"
-                  }`}
-                  title={m.label}
-                >
-                  {m.icon}
-                </button>
+                <Tooltip key={m.id} label={m.label} position="bottom">
+                  <button
+                    onClick={() => onViewModeChange(m.id)}
+                    className={`clay-btn-icon !p-1.5 !rounded-[8px] ${viewMode === m.id ? "active" : ""}`}
+                  >
+                    {m.icon}
+                  </button>
+                </Tooltip>
               ))}
             </div>
           );
@@ -166,16 +164,17 @@ export default function PdfToolbar({
         if (showPageNav) {
           sections.push(
             <div key="pn" className="flex items-center gap-1.5">
-              <button
-                onClick={() => onGoToPage(currentPage - 1)}
-                disabled={currentPage <= 1}
-                className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
-                title="Previous page"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 3L4 7l5 4" />
-                </svg>
-              </button>
+              <Tooltip label="Previous page" position="bottom">
+                <button
+                  onClick={() => onGoToPage(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="clay-btn-icon !p-1.5 disabled:opacity-20"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 3L4 7l5 4" />
+                  </svg>
+                </button>
+              </Tooltip>
               <div className="flex items-center gap-1 text-xs">
                 <input
                   type="number"
@@ -183,22 +182,23 @@ export default function PdfToolbar({
                   onChange={(e) => setInputValue(e.target.value)}
                   onBlur={handleInputBlur}
                   onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                  className="w-12 text-center text-xs font-medium bg-transparent border border-oat rounded-[8px] py-1 focus:outline-none focus:border-matcha-600 transition-colors tabular-nums"
+                  className="w-12 text-center text-xs font-medium bg-transparent border border-oat rounded-[12px] py-1 focus:outline-none focus:border-matcha-600 transition-colors tabular-nums"
                   min={1}
                   max={totalPages}
                 />
                 <span className="text-silver whitespace-nowrap">/ {totalPages}</span>
               </div>
-              <button
-                onClick={() => onGoToPage(currentPage + 1)}
-                disabled={currentPage >= totalPages}
-                className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
-                title="Next page"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 3l5 4-5 4" />
-                </svg>
-              </button>
+              <Tooltip label="Next page" position="bottom">
+                <button
+                  onClick={() => onGoToPage(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="clay-btn-icon !p-1.5 disabled:opacity-20"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 3l5 4-5 4" />
+                  </svg>
+                </button>
+              </Tooltip>
               <span className="text-[11px] text-silver tabular-nums ml-0.5">{pct}%</span>
             </div>
           );
@@ -206,20 +206,16 @@ export default function PdfToolbar({
 
         if (showColorMode) {
           sections.push(
-            <div key="cm" className="flex items-center bg-oat/40 rounded-[8px] p-0.5 gap-0.5">
+            <div key="cm" className="clay-segmented flex items-center bg-oat/40 rounded-[12px] p-0.5 gap-0.5">
               {COLOR_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => onColorModeChange(m.id)}
-                  className={`p-1.5 rounded-[6px] transition-all ${
-                    colorMode === m.id
-                      ? "bg-clay-white shadow-sm text-clay-black"
-                      : "text-silver hover:text-clay-black"
-                  }`}
-                  title={m.label}
-                >
-                  {m.icon}
-                </button>
+                <Tooltip key={m.id} label={m.label} position="bottom">
+                  <button
+                    onClick={() => onColorModeChange(m.id)}
+                    className={`clay-btn-icon !p-1.5 !rounded-[8px] ${colorMode === m.id ? "active" : ""}`}
+                  >
+                    {m.icon}
+                  </button>
+                </Tooltip>
               ))}
             </div>
           );
@@ -228,33 +224,36 @@ export default function PdfToolbar({
         if (showZoom) {
           sections.push(
             <div key="zm" className="flex items-center gap-1">
-              <button
-                onClick={onZoomOut}
-                disabled={zoom <= zoomMin}
-                className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
-                title="Zoom out (Ctrl -)"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M3 7h8" />
-                </svg>
-              </button>
-              <button
-                onClick={onZoomReset}
-                className="text-[11px] text-silver tabular-nums hover:text-clay-black transition-colors min-w-[3rem] text-center"
-                title="Reset zoom (Ctrl 0)"
-              >
-                {Math.round(zoom * 100)}%
-              </button>
-              <button
-                onClick={onZoomIn}
-                disabled={zoom >= zoomMax}
-                className="clay-btn-white !p-1.5 !rounded-[8px] disabled:opacity-20"
-                title="Zoom in (Ctrl +)"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M7 3v8M3 7h8" />
-                </svg>
-              </button>
+              <Tooltip label="Zoom out" shortcut="Ctrl −" position="bottom">
+                <button
+                  onClick={onZoomOut}
+                  disabled={zoom <= zoomMin}
+                  className="clay-btn-icon !p-1.5 disabled:opacity-20"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M3 7h8" />
+                  </svg>
+                </button>
+              </Tooltip>
+              <Tooltip label="Reset zoom" shortcut="Ctrl 0" position="bottom">
+                <button
+                  onClick={onZoomReset}
+                  className="clay-btn-ghost !text-[11px] tabular-nums min-w-[3rem] text-center"
+                >
+                  {Math.round(zoom * 100)}%
+                </button>
+              </Tooltip>
+              <Tooltip label="Zoom in" shortcut="Ctrl +" position="bottom">
+                <button
+                  onClick={onZoomIn}
+                  disabled={zoom >= zoomMax}
+                  className="clay-btn-icon !p-1.5 disabled:opacity-20"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M7 3v8M3 7h8" />
+                  </svg>
+                </button>
+              </Tooltip>
             </div>
           );
         }

@@ -164,6 +164,85 @@ html, body, #root {
   box-shadow: var(--shadow-hover-sm);
 }
 
+.clay-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  color: var(--charcoal);
+  border: 1px solid var(--oat);
+  border-radius: 12px;
+  padding: 6px;
+  cursor: pointer;
+  box-shadow: var(--shadow-clay);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+}
+.clay-btn-icon:hover {
+  transform: translateY(-2px) rotateZ(-3deg);
+  box-shadow: var(--shadow-hover-sm);
+  color: var(--black);
+}
+.clay-btn-icon:active {
+  transform: translateY(-1px) rotateZ(-1deg);
+}
+.clay-btn-icon.active {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+  box-shadow: var(--shadow-clay);
+}
+.clay-btn-icon.active:hover {
+  transform: translateY(-2px) rotateZ(-3deg);
+  box-shadow: var(--shadow-hover-sm);
+}
+
+/* Segmented control variant: buttons inside a tinted group strip */
+.clay-segmented .clay-btn-icon {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.clay-segmented .clay-btn-icon:hover {
+  background: var(--white);
+  box-shadow: var(--shadow-clay);
+}
+.clay-segmented .clay-btn-icon.active {
+  background: var(--white);
+  color: var(--black);
+  border-color: transparent;
+  box-shadow: var(--shadow-clay);
+}
+
+.clay-btn-ghost {
+  background: var(--white);
+  color: var(--charcoal);
+  border: 1px solid var(--oat);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-weight: 500;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow-clay);
+  transition: transform 0.2s, box-shadow 0.2s, color 0.2s;
+}
+.clay-btn-ghost:hover {
+  transform: translateY(-2px) rotateZ(-2deg);
+  box-shadow: var(--shadow-hover-sm);
+  color: var(--black);
+}
+.clay-btn-ghost:active {
+  transform: translateY(-1px) rotateZ(-1deg);
+}
+.clay-btn-ghost.danger {
+  color: var(--pomegranate-400);
+  border-color: rgba(252, 121, 129, 0.3);
+}
+.clay-btn-ghost.danger:hover {
+  transform: translateY(-2px) rotateZ(-2deg);
+  box-shadow: var(--shadow-hover-sm);
+  color: var(--pomegranate-400);
+}
+
 .clay-badge {
   font-size: 9.6px;
   font-weight: 600;
@@ -228,6 +307,39 @@ html, body, #root {
   padding: 0.5em;
   border-bottom: 1px solid var(--oat);
   text-align: left;
+}
+
+/* ── AI Response Prose ── */
+.ai-prose h3.ai-h, .ai-prose h4.ai-h {
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+}
+.ai-prose h3.ai-h { font-size: 1em; }
+.ai-prose h4.ai-h { font-size: 0.9em; color: var(--charcoal); }
+.ai-prose p { margin: 0.4em 0; }
+.ai-prose ul, .ai-prose ol { padding-left: 1.3em; margin: 0.4em 0; }
+.ai-prose li { margin-bottom: 0.25em; }
+.ai-prose li::marker { color: var(--silver); }
+.ai-prose strong { font-weight: 600; }
+.ai-prose em { font-style: italic; }
+.ai-prose hr { border: none; border-top: 1px solid var(--oat); margin: 0.6em 0; }
+.ai-prose code.ai-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--oat-light);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.ai-prose pre.ai-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--oat-light);
+  padding: 0.6em 0.8em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.4em 0;
 }
 
 /* ── Animations ── */

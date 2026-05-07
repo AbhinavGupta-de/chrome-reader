@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { VocabWord } from "../lib/vocab/types";
 import AudioButton from "./AudioButton";
+import Tooltip from "./Tooltip";
 import { wordsToCsv, downloadCsv } from "../lib/vocab/csv";
 
 type WordsSortKey = "recent" | "alpha" | "seen" | "due";
@@ -117,15 +118,21 @@ export default function WordsPanel({
           </select>
         </div>
         <div className="flex gap-1.5">
-          <button onClick={onReview} disabled={dueCount === 0} className="flex-1 clay-btn-solid text-xs !py-1.5 disabled:opacity-50">
-            Review {dueCount > 0 && `(${dueCount})`}
-          </button>
-          <button onClick={onQuiz} disabled={items.length === 0} className="flex-1 clay-btn-white text-xs !py-1.5 disabled:opacity-50">
-            Quiz me
-          </button>
-          <button onClick={exportCsv} disabled={items.length === 0} className="clay-btn-white text-xs !py-1.5 !px-2.5 disabled:opacity-50" title="Export CSV">
-            ⤓
-          </button>
+          <Tooltip label="Review due vocabulary cards" position="bottom">
+            <button onClick={onReview} disabled={dueCount === 0} className="flex-1 clay-btn-solid text-xs !py-1.5 disabled:opacity-50">
+              Review {dueCount > 0 && `(${dueCount})`}
+            </button>
+          </Tooltip>
+          <Tooltip label="Quiz yourself on saved words" position="bottom">
+            <button onClick={onQuiz} disabled={items.length === 0} className="flex-1 clay-btn-white text-xs !py-1.5 disabled:opacity-50">
+              Quiz me
+            </button>
+          </Tooltip>
+          <Tooltip label="Export as CSV" position="top">
+            <button onClick={exportCsv} disabled={items.length === 0} className="clay-btn-white text-xs !py-1.5 !px-2.5 disabled:opacity-50">
+              ⤓
+            </button>
+          </Tooltip>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5">
@@ -181,8 +188,12 @@ export default function WordsPanel({
                     ))}
                   </div>
                   <div className="flex justify-end gap-1.5 pt-1">
-                    <button onClick={() => onResetStage(word.id)} className="text-[10px] text-silver hover:text-clay-black">↻ Reset</button>
-                    <button onClick={() => onDelete(word.id)} className="text-[10px] text-pomegranate-400">🗑 Delete</button>
+                    <Tooltip label="Reset learning progress" position="top">
+                      <button onClick={() => onResetStage(word.id)} className="clay-btn-ghost !text-[10px]">↻ Reset</button>
+                    </Tooltip>
+                    <Tooltip label="Remove from vocabulary" position="top">
+                      <button onClick={() => onDelete(word.id)} className="clay-btn-ghost danger !text-[10px]">🗑 Delete</button>
+                    </Tooltip>
                   </div>
                 </div>
               )}
@@ -193,7 +204,7 @@ export default function WordsPanel({
       {selectedIds.size > 0 && (
         <div className="border-t border-oat px-3 py-2 flex items-center justify-between bg-cream">
           <span className="text-xs">{selectedIds.size} selected</span>
-          <button onClick={bulkDelete} className="text-xs text-pomegranate-400 font-medium">Delete</button>
+          <button onClick={bulkDelete} className="clay-btn-ghost danger !text-xs font-medium">Delete selected</button>
         </div>
       )}
     </div>

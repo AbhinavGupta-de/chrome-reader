@@ -52,6 +52,7 @@ export default function App() {
   const [showReview, setShowReview] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const [pendingExplainText, setPendingExplainText] = useState<string | null>(null);
   const [topBarExpanded, setTopBarExpanded] = useState(false);
   const [pendingFragment, setPendingFragment] = useState<string | null>(null);
   const theme = useTheme(settings.themeId);
@@ -197,7 +198,9 @@ export default function App() {
         return;
       }
       if (action === "explain") {
+        setPendingExplainText(p.text);
         panel.openRightPanel("ai");
+        window.getSelection()?.removeAllRanges();
         return;
       }
       if (action === "define") {
@@ -281,7 +284,15 @@ export default function App() {
     if (!currentBook || !position) return "";
     const idx = position.chapterIndex;
     if (currentBook.format === "epub" && currentBook.epub) return currentBook.epub.chapters[idx]?.content ?? "";
-    if (currentBook.format === "pdf") return "";
+    if (currentBook.format === "pdf") {
+      const pageWrappers = document.querySelectorAll<HTMLElement>(".pdf-page-wrapper[data-page]");
+      const texts: string[] = [];
+      pageWrappers.forEach((wrapper) => {
+        const tl = wrapper.querySelector(".textLayer");
+        if (tl?.textContent) texts.push(tl.textContent);
+      });
+      return texts.join("\n\n");
+    }
     if (currentBook.format === "txt" && currentBook.txt) return currentBook.txt.chunks[idx] ?? "";
     return "";
   }, [currentBook, position]);
@@ -289,7 +300,7 @@ export default function App() {
   const currentChapterText = useMemo(() => getCurrentChapterText(), [getCurrentChapterText]);
   const readingTimeMinutes = useMemo(() => {
     if (!currentBook) return null;
-    if (currentBook.format === "pdf") return null;
+    if (!currentChapterText) return null;
     return estimateReadingMinutes(stripHtmlForCount(currentChapterText));
   }, [currentBook, currentChapterText]);
 
@@ -363,6 +374,8 @@ export default function App() {
     activePanelId: panel.panelState.right,
     ai,
     selectedText,
+    autoExplainText: pendingExplainText,
+    onAutoExplainConsumed: () => setPendingExplainText(null),
     onSignIn: signIn,
     highlights: highlights.items,
     onJumpToHighlight: (highlight) => handlePositionChange(highlight.anchor.chapterIndex, 0, 0),
@@ -709,6 +722,8 @@ interface RightPanelRenderArgs {
   activePanelId: "ai" | "highlights" | "words" | null;
   ai: ReturnType<typeof useAI>;
   selectedText: string;
+  autoExplainText: string | null;
+  onAutoExplainConsumed: () => void;
   onSignIn: () => void;
   highlights: ReturnType<typeof useHighlights>["items"];
   onJumpToHighlight: (highlight: ReturnType<typeof useHighlights>["items"][number]) => void;
@@ -723,6 +738,8 @@ function renderRightPanelContent({
   activePanelId,
   ai,
   selectedText,
+  autoExplainText,
+  onAutoExplainConsumed,
   onSignIn,
   highlights,
   onJumpToHighlight,
@@ -740,6 +757,8 @@ function renderRightPanelContent({
         onHighlights={() => ai.highlights(getCurrentChapterText())}
         onExplain={(selection) => ai.explain(selection, getCurrentChapterText())}
         selectedText={selectedText}
+        autoExplainText={autoExplainText}
+        onAutoExplainConsumed={onAutoExplainConsumed}
         loading={ai.loading}
         error={ai.error}
         available={ai.available}

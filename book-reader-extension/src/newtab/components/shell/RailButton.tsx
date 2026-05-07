@@ -22,11 +22,7 @@ export default function RailButton({ label, active, onClick, badge, tooltipPosit
         onClick={onClick}
         aria-label={label}
         aria-pressed={active}
-        className={`relative w-10 h-10 mx-auto flex items-center justify-center rounded-[12px] transition-colors ${
-          active
-            ? "bg-clay-black text-clay-white clay-shadow"
-            : "text-charcoal hover:bg-frost"
-        }`}
+        className={`clay-btn-icon relative w-10 h-10 mx-auto ${active ? "active" : ""}`}
       >
         {children}
         {badge && (
