@@ -118,7 +118,7 @@ export default function Settings({ settings, onChange, onClose, isPdf, theme, is
   const isPdfTintOverrideEnabled = settings.pdfTintOverride !== null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-clay-black/30 flex items-center justify-center p-4 fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 fade-in">
       <div className="clay-card w-full max-w-2xl !p-0 overflow-hidden modal-enter flex flex-col" style={{ height: "min(560px, 85vh)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-oat flex-shrink-0">

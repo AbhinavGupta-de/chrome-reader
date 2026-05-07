@@ -49,7 +49,7 @@ export default function QuizModal({ items, onClose }: Props) {
 
   if (questions.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-clay-black/40 flex items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
         <div className="clay-card !p-6 max-w-sm text-center">
           <p className="text-sm mb-4">Save some words first — quizzes need at least one saved word.</p>
           <button onClick={onClose} className="clay-btn-solid text-sm">Done</button>
@@ -60,7 +60,7 @@ export default function QuizModal({ items, onClose }: Props) {
 
   if (!q) {
     return (
-      <div className="fixed inset-0 z-50 bg-clay-black/40 flex items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
         <div className="clay-card !p-6 max-w-sm text-center">
           <p className="text-sm mb-2">Quiz finished.</p>
           <p className="text-2xl font-semibold mb-4">{score.correct} / {score.total}</p>
@@ -81,7 +81,7 @@ export default function QuizModal({ items, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-clay-black/40 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="clay-card !p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs text-silver">{index + 1} / {questions.length}</span>
