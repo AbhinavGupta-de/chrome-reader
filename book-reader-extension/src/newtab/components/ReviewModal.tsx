@@ -53,7 +53,7 @@ export default function ReviewModal({ items, onRate, onClose }: Props) {
 
   if (total === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-clay-black/40 flex items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
         <div className="clay-card !p-6 max-w-sm text-center">
           <p className="text-sm mb-4">No words due for review right now. Come back tomorrow!</p>
           <button onClick={onClose} className="clay-btn-solid text-sm">Done</button>
@@ -64,7 +64,7 @@ export default function ReviewModal({ items, onRate, onClose }: Props) {
 
   if (!card) {
     return (
-      <div className="fixed inset-0 z-50 bg-clay-black/40 flex items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
         <div className="clay-card !p-6 max-w-sm text-center">
           <p className="text-sm mb-2">All caught up.</p>
           <p className="text-xs text-silver mb-4">{total} word{total === 1 ? "" : "s"} reviewed.</p>
@@ -77,7 +77,7 @@ export default function ReviewModal({ items, onRate, onClose }: Props) {
   const firstContext = card.contexts[0];
 
   return (
-    <div className="fixed inset-0 z-50 bg-clay-black/40 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="clay-card !p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs text-silver">{index + 1} / {total} due</span>

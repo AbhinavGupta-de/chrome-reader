@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Instant Book Reader",
-  "version": "1.0.1",
-  "description": "Read your books on every new tab. Supports EPUB, PDF, and TXT with AI-powered features.",
+  "version": "1.0.2",
+  "description": "Your reading space, always one tab away. Read EPUB, PDF & TXT with AI summaries, highlights, vocabulary builder, and 15+ themes.",
   "permissions": ["storage", "identity", "alarms"],
   "chrome_url_overrides": {
     "newtab": "src/newtab/index.html"
