@@ -1,5 +1,6 @@
 import React from "react";
 import { ReaderSettings } from "../../lib/storage";
+import Tooltip from "../Tooltip";
 
 export const FONT_OPTIONS: ReadonlyArray<{
   label: string;
@@ -80,23 +81,24 @@ export default function InlineReaderControls({
           {FONT_OPTIONS.map((font) => {
             const isActive = settings.fontFamily === font.value;
             return (
-              <button
-                key={font.value}
-                type="button"
-                onClick={() => update({ fontFamily: font.value })}
-                aria-pressed={isActive}
-                className={`px-2.5 py-1 text-xs rounded-[8px] border transition-all ${
-                  isActive
-                    ? "border-clay-black bg-clay-white clay-shadow"
-                    : "border-oat hover:border-charcoal"
-                }`}
-                style={{ fontFamily: font.value }}
-              >
-                <span className="text-sm">{font.preview}</span>
-                <span className="ml-1 text-[10px] text-silver" style={{ fontFamily: "var(--font-sans)" }}>
-                  {font.label}
-                </span>
-              </button>
+              <Tooltip key={font.value} label={`Switch to ${font.label}`} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => update({ fontFamily: font.value })}
+                  aria-pressed={isActive}
+                  className={`px-2.5 py-1 text-xs rounded-[8px] border transition-all ${
+                    isActive
+                      ? "border-clay-black bg-clay-white clay-shadow"
+                      : "border-oat hover:border-charcoal"
+                  }`}
+                  style={{ fontFamily: font.value }}
+                >
+                  <span className="text-sm">{font.preview}</span>
+                  <span className="ml-1 text-[10px] text-silver" style={{ fontFamily: "var(--font-sans)" }}>
+                    {font.label}
+                  </span>
+                </button>
+              </Tooltip>
             );
           })}
         </div>

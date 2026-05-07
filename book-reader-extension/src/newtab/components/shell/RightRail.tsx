@@ -1,5 +1,6 @@
 import React from "react";
 import RailButton from "./RailButton";
+import Tooltip from "../Tooltip";
 import type { RightPanelId } from "../../hooks/usePanelState";
 
 export const RIGHT_RAIL_WIDTH_PX = 60;
@@ -41,6 +42,7 @@ export default function RightRail({
           label="AI Assistant"
           active={activePanelId === "ai"}
           onClick={() => onActivatePanel("ai")}
+          tooltipPosition="left"
         >
           <SparkleIcon />
         </RailButton>
@@ -48,6 +50,7 @@ export default function RightRail({
           label="Highlights"
           active={activePanelId === "highlights"}
           onClick={() => onActivatePanel("highlights")}
+          tooltipPosition="left"
         >
           <HighlightIcon />
         </RailButton>
@@ -56,31 +59,34 @@ export default function RightRail({
           active={activePanelId === "words"}
           onClick={() => onActivatePanel("words")}
           badge={dueBadge}
+          tooltipPosition="left"
         >
           <BookIcon />
         </RailButton>
       </div>
       <div>
         {user ? (
-          <button
-            type="button"
-            onClick={onSignOut}
-            aria-label={`Signed in as ${user.name}. Click to sign out.`}
-            title={user.email}
-            className="w-9 h-9 rounded-full bg-ube-800 flex items-center justify-center text-clay-white text-xs font-bold clay-shadow"
-          >
-            {user.name.charAt(0).toUpperCase()}
-          </button>
+          <Tooltip label={`Sign out (${user.email})`} position="left">
+            <button
+              type="button"
+              onClick={onSignOut}
+              aria-label={`Signed in as ${user.name}. Click to sign out.`}
+              className="w-9 h-9 rounded-full bg-ube-800 flex items-center justify-center text-clay-white text-xs font-bold clay-shadow"
+            >
+              {user.name.charAt(0).toUpperCase()}
+            </button>
+          </Tooltip>
         ) : (
-          <button
-            type="button"
-            onClick={onSignIn}
-            aria-label="Sign in with Google"
-            title="Sign in"
-            className="w-9 h-9 rounded-full border border-oat flex items-center justify-center text-silver hover:text-clay-black hover:border-charcoal transition-colors"
-          >
-            <SignInIcon />
-          </button>
+          <Tooltip label="Sign in with Google" position="left">
+            <button
+              type="button"
+              onClick={onSignIn}
+              aria-label="Sign in with Google"
+              className="w-9 h-9 rounded-full border border-oat flex items-center justify-center text-silver hover:text-clay-black hover:border-charcoal transition-colors"
+            >
+              <SignInIcon />
+            </button>
+          </Tooltip>
         )}
       </div>
     </nav>

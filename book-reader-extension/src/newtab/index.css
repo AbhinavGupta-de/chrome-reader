@@ -260,3 +260,9 @@ html, body, #root {
   to { transform: translateY(0); opacity: 1; }
 }
 .drop-down { animation: drop-down 0.18s ease-out; }
+
+@keyframes tooltip-fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.tooltip-fade-in { animation: tooltip-fade-in 0.12s ease-out; }

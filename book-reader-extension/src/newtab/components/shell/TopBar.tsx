@@ -2,6 +2,7 @@ import React from "react";
 import { ReaderSettings } from "../../lib/storage";
 import { useDismissable } from "../../hooks/useClickOutside";
 import InlineReaderControls from "./InlineReaderControls";
+import Tooltip from "../Tooltip";
 
 export const TOPBAR_COLLAPSED_HEIGHT_PX = 28;
 export const TOPBAR_EXPANDED_HEIGHT_PX = 120;
@@ -91,16 +92,18 @@ export default function TopBar({
               </div>
               <p className="text-[11px] text-silver truncate mt-0.5">{bookAuthor}</p>
             </div>
-            <button
-              type="button"
-              onClick={onCollapse}
-              aria-label="Collapse reader controls"
-              className="clay-btn-white !p-1.5 !rounded-[8px]"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
+            <Tooltip label="Collapse controls" position="bottom">
+              <button
+                type="button"
+                onClick={onCollapse}
+                aria-label="Collapse reader controls"
+                className="clay-btn-white !p-1.5 !rounded-[8px]"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </Tooltip>
           </div>
           <InlineReaderControls
             settings={settings}

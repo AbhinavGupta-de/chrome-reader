@@ -3,6 +3,7 @@ import {
   MAX_PANEL_WIDTH_PX,
   MIN_PANEL_WIDTH_PX,
 } from "../../hooks/usePanelState";
+import Tooltip from "../Tooltip";
 
 export type PanelSide = "left" | "right";
 
@@ -49,16 +50,18 @@ export default function Panel({
         <h3 className="text-sm font-semibold tracking-tight" style={{ letterSpacing: "-0.2px" }}>
           {title}
         </h3>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={`Close ${title} panel`}
-          className="clay-btn-white !p-1.5 !rounded-[8px]"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        <Tooltip label="Close panel" position="bottom">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={`Close ${title} panel`}
+            className="clay-btn-white !p-1.5 !rounded-[8px]"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </Tooltip>
       </header>
       <div className="flex-1 overflow-y-auto">{children}</div>
       <button

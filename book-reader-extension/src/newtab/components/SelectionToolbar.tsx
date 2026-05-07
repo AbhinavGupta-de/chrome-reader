@@ -1,5 +1,6 @@
 import React from "react";
 import { HighlightColor } from "../lib/highlights/types";
+import Tooltip from "./Tooltip";
 
 export type { HighlightColor };
 
@@ -48,16 +49,17 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
       {showColors ? (
         <>
           {(Object.keys(COLOR_SWATCH) as HighlightColor[]).map((c) => (
-            <button
-              key={c}
-              aria-label={`Highlight ${c}`}
-              className="w-6 h-6 rounded-full border border-oat"
-              style={{ background: COLOR_SWATCH[c] }}
-              onClick={() => {
-                onAction("highlight", { color: c });
-                setShowColors(false);
-              }}
-            />
+            <Tooltip key={c} label={`Highlight ${c}`} position="top" delay={200}>
+              <button
+                aria-label={`Highlight ${c}`}
+                className="w-6 h-6 rounded-full border border-oat"
+                style={{ background: COLOR_SWATCH[c] }}
+                onClick={() => {
+                  onAction("highlight", { color: c });
+                  setShowColors(false);
+                }}
+              />
+            </Tooltip>
           ))}
           <button
             className="text-xs px-2 text-silver"
@@ -69,36 +71,47 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
       ) : (
         <>
           {hasOverlap ? (
-            <button
-              className="text-xs !py-1 !px-2.5 clay-btn-white text-pomegranate-400 inline-flex items-center gap-1"
-              onClick={() => onAction("remove_highlight", { highlightIds: overlapping })}
-              title="Remove highlight"
-            >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.5 9a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1L12 4" />
-              </svg>
-              Remove
-            </button>
+            <Tooltip label="Remove existing highlight" position="top" delay={200}>
+              <button
+                className="text-xs !py-1 !px-2.5 clay-btn-white text-pomegranate-400 inline-flex items-center gap-1"
+                onClick={() => onAction("remove_highlight", { highlightIds: overlapping })}
+              >
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.5 9a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1L12 4" />
+                </svg>
+                Remove
+              </button>
+            </Tooltip>
           ) : (
-            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
-              Highlight
-            </button>
+            <Tooltip label="Highlight selected text" position="top" delay={200}>
+              <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
+                Highlight
+              </button>
+            </Tooltip>
           )}
-          <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
-            Define
-          </button>
+          <Tooltip label="Look up definition" position="top" delay={200}>
+            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
+              Define
+            </button>
+          </Tooltip>
           {aiAvailable && (
-            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("translate")}>
-              Translate
-            </button>
+            <Tooltip label="Translate to your language" position="top" delay={200}>
+              <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("translate")}>
+                Translate
+              </button>
+            </Tooltip>
           )}
-          <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("search")}>
-            Web
-          </button>
-          {hasExplain && (
-            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("explain")}>
-              Explain
+          <Tooltip label="Search on Google" position="top" delay={200}>
+            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("search")}>
+              Web
             </button>
+          </Tooltip>
+          {hasExplain && (
+            <Tooltip label="Explain with AI" position="top" delay={200}>
+              <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("explain")}>
+                Explain
+              </button>
+            </Tooltip>
           )}
         </>
       )}
