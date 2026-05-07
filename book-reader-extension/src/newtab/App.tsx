@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Reader from "./components/Reader";
-import Library from "./components/Library";
+import AppShell from "./components/AppShell";
 import AIPanel from "./components/AIPanel";
 import ProgressBar from "./components/ProgressBar";
 import Settings from "./components/Settings";
@@ -11,32 +11,52 @@ import ReviewModal from "./components/ReviewModal";
 import QuizModal from "./components/QuizModal";
 import HighlightsPanel from "./components/HighlightsPanel";
 import WordsPanel from "./components/WordsPanel";
+import LibraryPanel from "./components/panels/LibraryPanel";
+import TocPanel from "./components/panels/TocPanel";
 import type { ToolbarAction, HighlightColor } from "./components/SelectionToolbar";
 import { useBook } from "./hooks/useBook";
 import { usePosition } from "./hooks/usePosition";
 import { useAuth } from "./hooks/useAuth";
 import { useAI } from "./hooks/useAI";
-import { getSettings, saveSettings, ReaderSettings, DEFAULT_SETTINGS } from "./lib/storage";
+import { useTheme } from "./hooks/useTheme";
+import { usePanelState } from "./hooks/usePanelState";
+import { useAppBootstrap } from "./hooks/useAppBootstrap";
+import {
+  getSettings,
+  saveSettings,
+  ReaderSettings,
+  DEFAULT_SETTINGS,
+} from "./lib/storage";
 import { defineWord, DictEntry } from "./lib/dictionary";
 import { aiTranslate } from "./lib/api";
 import { useHighlights } from "./hooks/useHighlights";
 import { buildAnchor, offsetsFromRange } from "./lib/highlights/anchor";
 import { useVocab } from "./hooks/useVocab";
 import { VocabContext, VocabDefinition } from "./lib/vocab/types";
+import type { TocNode } from "./lib/parsers/epub";
+
+const READING_WORDS_PER_MINUTE = 230;
+
+function estimateReadingMinutes(text: string): number {
+  if (!text) return 0;
+  return Math.max(1, Math.ceil(text.split(/\s+/).length / READING_WORDS_PER_MINUTE));
+}
 
 export default function App() {
-  const { currentBook, library, loading, error, uploadBook, removeBook, switchBook } = useBook();
+  const { bootstrapped } = useAppBootstrap();
+  const { currentBook, library, loading, error, progressByHash, uploadBook, removeBook, switchBook } =
+    useBook();
   const { user, signIn, signOut } = useAuth();
   const [settings, setSettings] = useState<ReaderSettings>(DEFAULT_SETTINGS);
-  const [showLibrary, setShowLibrary] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showAI, setShowAI] = useState(false);
-  const [showHighlights, setShowHighlights] = useState(false);
-  const [showWords, setShowWords] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedText, setSelectedText] = useState("");
-  const [toolbarHover, setToolbarHover] = useState(false);
+  const [pendingExplainText, setPendingExplainText] = useState<string | null>(null);
+  const [topBarExpanded, setTopBarExpanded] = useState(false);
+  const [pendingFragment, setPendingFragment] = useState<string | null>(null);
+  const theme = useTheme(settings.themeId);
+  const panel = usePanelState();
   const [dict, setDict] = useState<{
     loading: boolean;
     entry: DictEntry | null;
@@ -67,12 +87,32 @@ export default function App() {
   const vocab = useVocab();
   const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(null);
 
-  useEffect(() => { getSettings().then(setSettings); }, []);
+  /**
+   * Tracks whether the persisted-settings load has completed. Until it has,
+   * the theme-persist effect must not run — otherwise it would overwrite the
+   * stored themeId with the React-state default before we've ever read it.
+   */
+  const settingsHydratedRef = useRef(false);
 
-  // Apply dark class to root
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", settings.theme === "dark");
-  }, [settings.theme]);
+    getSettings().then((loaded) => {
+      setSettings(loaded);
+      theme.setThemeId(loaded.themeId);
+      settingsHydratedRef.current = true;
+    });
+    // theme.setThemeId is referentially stable (useCallback with no deps)
+    // so it does not need to participate in the dependency array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist theme changes back to settings storage so refreshes keep the choice.
+  useEffect(() => {
+    if (!settingsHydratedRef.current) return;
+    if (settings.themeId === theme.activeThemeId) return;
+    const next = { ...settings, themeId: theme.activeThemeId };
+    setSettings(next);
+    saveSettings(next);
+  }, [theme.activeThemeId, settings]);
 
   useEffect(() => {
     if (!user || !currentBook?.hash) return;
@@ -100,19 +140,52 @@ export default function App() {
     return () => window.removeEventListener("online", onOnline);
   }, []);
 
-  const handleSettingsChange = useCallback(async (s: ReaderSettings) => {
-    setSettings(s);
-    await saveSettings(s);
+  const handleSettingsChange = useCallback(async (next: ReaderSettings) => {
+    setSettings(next);
+    await saveSettings(next);
   }, []);
 
   const handlePositionChange = useCallback(
-    (chapterIndex: number, scrollOffset: number, percentage: number) => { updatePosition(chapterIndex, scrollOffset, percentage); },
-    [updatePosition]
+    (chapterIndex: number, scrollOffset: number, percentage: number) => {
+      updatePosition(chapterIndex, scrollOffset, percentage);
+    },
+    [updatePosition],
   );
+
+  const totalSections = useMemo(() => {
+    if (!currentBook) return 0;
+    if (currentBook.format === "epub") return currentBook.epub?.chapters.length ?? 0;
+    if (currentBook.format === "txt") return currentBook.txt?.chunks.length ?? 0;
+    if (currentBook.format === "pdf") return currentBook.pdf?.totalPages ?? 0;
+    return 0;
+  }, [currentBook]);
+
+  const jumpToChapter = useCallback(
+    (spineIndex: number, fragment: string | null) => {
+      if (spineIndex < 0 || totalSections <= 0) return;
+      const percentage = (spineIndex / totalSections) * 100;
+      handlePositionChange(spineIndex, 0, percentage);
+      // PDFs cannot resolve in-page anchors; ignore any fragment for them.
+      const isFragmentRoutable = currentBook?.format !== "pdf";
+      setPendingFragment(isFragmentRoutable ? fragment : null);
+    },
+    [handlePositionChange, totalSections, currentBook],
+  );
+
+  const goToTocNode = useCallback(
+    (node: TocNode) => {
+      if (node.spineIndex < 0) return;
+      jumpToChapter(node.spineIndex, node.fragment);
+      panel.closeLeftPanel();
+    },
+    [jumpToChapter, panel],
+  );
+
+  const onPendingFragmentConsumed = useCallback(() => setPendingFragment(null), []);
 
   const handleSelectionAction = useCallback(
     (action: ToolbarAction, p: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }) => {
-      setSelectedText(p.text); // keep AIPanel "Explain" working
+      setSelectedText(p.text);
       if (action === "remove_highlight") {
         const ids = p.highlightIds ?? [];
         for (const id of ids) highlights.remove(id);
@@ -125,7 +198,9 @@ export default function App() {
         return;
       }
       if (action === "explain") {
-        setShowAI(true);
+        setPendingExplainText(p.text);
+        panel.openRightPanel("ai");
+        window.getSelection()?.removeAllRanges();
         return;
       }
       if (action === "define") {
@@ -202,71 +277,57 @@ export default function App() {
         return;
       }
     },
-    [currentBook, ai.available, settings.translateTo, highlights.create, highlights.remove]
+    [currentBook, settings.translateTo, highlights, panel],
   );
 
   const getCurrentChapterText = useCallback((): string => {
     if (!currentBook || !position) return "";
     const idx = position.chapterIndex;
     if (currentBook.format === "epub" && currentBook.epub) return currentBook.epub.chapters[idx]?.content ?? "";
-    if (currentBook.format === "pdf") return "";
+    if (currentBook.format === "pdf") {
+      const pageWrappers = document.querySelectorAll<HTMLElement>(".pdf-page-wrapper[data-page]");
+      const texts: string[] = [];
+      pageWrappers.forEach((wrapper) => {
+        const tl = wrapper.querySelector(".textLayer");
+        if (tl?.textContent) texts.push(tl.textContent);
+      });
+      return texts.join("\n\n");
+    }
     if (currentBook.format === "txt" && currentBook.txt) return currentBook.txt.chunks[idx] ?? "";
     return "";
   }, [currentBook, position]);
 
-  const toolbarVisible = settings.pinToolbar || toolbarHover;
+  const currentChapterText = useMemo(() => getCurrentChapterText(), [getCurrentChapterText]);
+  const readingTimeMinutes = useMemo(() => {
+    if (!currentBook) return null;
+    if (!currentChapterText) return null;
+    return estimateReadingMinutes(stripHtmlForCount(currentChapterText));
+  }, [currentBook, currentChapterText]);
+
+  const closeTopBar = useCallback(() => setTopBarExpanded(false), []);
+  const expandTopBar = useCallback(() => setTopBarExpanded(true), []);
+
+  // ── Bootstrap spinner ──
+  if (!bootstrapped) {
+    return (
+      <div className="h-full flex items-center justify-center bg-cream text-clay-black">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-clay-black border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-silver">Starting up...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Empty state ──
   if (!currentBook && !loading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-cream text-clay-black fade-in">
-        <div className="text-center max-w-sm px-6">
-          <img
-            src="/BookFlipSmall.jpg"
-            alt="Instant Book Reader"
-            className="w-24 h-24 mx-auto mb-8 rounded-[24px] object-cover clay-shadow"
-          />
-
-          <h1 className="text-4xl font-semibold tracking-tight mb-2" style={{ letterSpacing: "-1.6px" }}>
-            Instant Reader
-          </h1>
-          <p className="text-charcoal mb-10">Your reading space, always one tab away.</p>
-
-          <button onClick={() => setShowLibrary(true)} className="clay-btn-solid w-full text-lg !py-3 !rounded-[12px]">
-            Open a Book
-          </button>
-
-          <div className="mt-8 flex items-center justify-center gap-4">
-            {[
-              { label: "EPUB", color: "bg-matcha-300" },
-              { label: "PDF", color: "bg-pomegranate-400" },
-              { label: "TXT", color: "bg-slushie-500" },
-            ].map((f) => (
-              <span key={f.label} className="flex items-center gap-1.5 text-xs text-silver">
-                <span className={`w-1.5 h-1.5 rounded-full ${f.color}`} /> {f.label}
-              </span>
-            ))}
-          </div>
-
-          <p className="mt-3 text-xs text-silver">
-            Everything stays on your device &middot; Works offline
-          </p>
-
-          {!user && (
-            <button onClick={signIn} className="mt-5 text-xs text-silver hover:text-matcha-600 transition-colors underline underline-offset-2">
-              Sign in for cloud sync &amp; AI
-            </button>
-          )}
-
-          {error && (
-            <p className="mt-4 text-sm text-pomegranate-400 bg-pomegranate-400/10 px-4 py-2 rounded-[12px]">{error}</p>
-          )}
-        </div>
-
-        {showLibrary && (
-          <Library books={library} currentHash={null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
-        )}
-      </div>
+      <EmptyStateHero
+        onUploadBook={uploadBook}
+        onSignIn={signIn}
+        showSignIn={!user}
+        error={error}
+      />
     );
   }
 
@@ -283,148 +344,90 @@ export default function App() {
   }
 
   // ── Reader ──
+  const leftPanelTitle = panel.panelState.left === "toc"
+    ? "Table of Contents"
+    : panel.panelState.left === "library"
+      ? "Library"
+      : null;
+
+  const rightPanelTitle = panel.panelState.right === "ai"
+    ? "AI Assistant"
+    : panel.panelState.right === "highlights"
+      ? `Highlights (${highlights.items.length})`
+      : panel.panelState.right === "words"
+        ? `Words (${vocab.items.length})`
+        : null;
+
+  const leftPanelContent = renderLeftPanelContent({
+    activePanelId: panel.panelState.left,
+    book: currentBook,
+    chapterIndex: position?.chapterIndex ?? 0,
+    library,
+    progressByHash,
+    onJumpToTocNode: goToTocNode,
+    onSelectBook: (hash) => { switchBook(hash); panel.closeLeftPanel(); },
+    onUploadBook: uploadBook,
+    onDeleteBook: removeBook,
+  });
+
+  const rightPanelContent = renderRightPanelContent({
+    activePanelId: panel.panelState.right,
+    ai,
+    selectedText,
+    autoExplainText: pendingExplainText,
+    onAutoExplainConsumed: () => setPendingExplainText(null),
+    onSignIn: signIn,
+    highlights: highlights.items,
+    onJumpToHighlight: (highlight) => handlePositionChange(highlight.anchor.chapterIndex, 0, 0),
+    vocab,
+    currentBookHash: currentBook?.hash ?? null,
+    onReview: () => setShowReview(true),
+    onQuiz: () => setShowQuiz(true),
+    getCurrentChapterText,
+  });
+
   return (
-    <div className="h-full flex flex-col bg-cream text-clay-black">
+    <>
       <ProgressBar percentage={position?.percentage ?? 0} />
-
-      {/* Clay sticky nav */}
-      <div
-        className="relative z-40"
-        onMouseEnter={() => setToolbarHover(true)}
-        onMouseLeave={() => setToolbarHover(false)}
+      <AppShell
+        settings={settings}
+        onSettingsChange={handleSettingsChange}
+        panel={panel}
+        topBarExpanded={topBarExpanded}
+        onTopBarExpand={expandTopBar}
+        onTopBarCollapse={closeTopBar}
+        bookTitle={currentBook?.metadata.title ?? ""}
+        bookAuthor={currentBook?.metadata.author ?? ""}
+        bookFormat={currentBook?.format ?? null}
+        readingTimeMinutes={readingTimeMinutes}
+        user={user}
+        dueWordCount={vocab.dueCount}
+        onSignIn={signIn}
+        onSignOut={signOut}
+        onOpenSettings={() => setShowSettings(true)}
+        leftPanelTitle={leftPanelTitle}
+        rightPanelTitle={rightPanelTitle}
+        leftPanelContent={leftPanelContent}
+        rightPanelContent={rightPanelContent}
       >
-        {!settings.pinToolbar && <div className="h-3 w-full" />}
-
-        <div
-          className={`transition-all duration-200 ${
-            settings.pinToolbar
-              ? "relative"
-              : `absolute top-0 left-0 right-0 ${toolbarVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"}`
-          }`}
-        >
-          <nav
-            className="flex items-center justify-between px-6 py-3 border-b border-oat"
-            style={{ background: settings.theme === "dark" ? "rgba(26,24,21,0.92)" : "rgba(250,249,247,0.9)", backdropFilter: "blur(12px)" }}
-          >
-            {/* Left — book info */}
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-7 h-8 rounded-[8px] bg-clay-black flex items-center justify-center flex-shrink-0 clay-shadow">
-                <span className="text-[10px] font-semibold" style={{ color: "var(--white)" }}>
-                  {currentBook?.format.toUpperCase().charAt(0)}
-                </span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate max-w-[200px]" style={{ letterSpacing: "-0.16px" }}>
-                  {currentBook?.metadata.title}
-                </p>
-                <p className="text-[11px] text-silver truncate">{currentBook?.metadata.author}</p>
-              </div>
-            </div>
-
-            {/* Right — actions */}
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => setShowLibrary(true)} className="clay-btn-white text-xs !py-1.5 !px-3 !rounded-[12px]">
-                Library
-              </button>
-              <button
-                onClick={() => setShowAI(!showAI)}
-                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showAI ? "clay-btn-solid" : "clay-btn-white"}`}
-              >
-                AI {!ai.available && <span className="text-silver">*</span>}
-              </button>
-              <button
-                onClick={() => setShowHighlights(!showHighlights)}
-                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showHighlights ? "clay-btn-solid" : "clay-btn-white"}`}
-              >
-                Highlights
-              </button>
-              <button
-                onClick={() => setShowWords(!showWords)}
-                className={`text-xs !py-1.5 !px-3 !rounded-[12px] ${showWords ? "clay-btn-solid" : "clay-btn-white"}`}
-              >
-                Words {vocab.dueCount > 0 && <span className="text-pomegranate-400 ml-0.5">({vocab.dueCount})</span>}
-              </button>
-              <button onClick={() => setShowSettings(true)} className="clay-btn-white text-xs !py-1.5 !px-3 !rounded-[12px]">
-                Settings
-              </button>
-
-              <div className="w-px h-5 bg-oat mx-1" />
-
-              {user ? (
-                <button onClick={signOut} className="clay-btn-white text-xs !py-1 !px-2 !rounded-[1584px] flex items-center gap-1.5" title={`${user.email}`}>
-                  <span className="w-5 h-5 rounded-full bg-ube-800 flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-white">{user.name.charAt(0)}</span>
-                  </span>
-                  {user.name.split(" ")[0]}
-                </button>
-              ) : (
-                <button onClick={signIn} className="text-xs text-silver hover:text-clay-black transition-colors" style={{ fontWeight: 500, fontSize: 15, letterSpacing: 0 }}>
-                  Sign In
-                </button>
-              )}
-            </div>
-          </nav>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
         {currentBook && (
-          <div className="flex-1 overflow-hidden">
-            <Reader
-              book={currentBook}
-              position={position}
-              settings={settings}
-              highlights={highlights.items}
-              onPositionChange={handlePositionChange}
-              onSelectionAction={handleSelectionAction}
-              onHighlightClick={(id, rect) => setEditing({ id, rect })}
-              hasExplain={ai.available}
-              aiAvailable={ai.available}
-            />
-          </div>
-        )}
-
-        {showAI && currentBook && (
-          <AIPanel
-            onSummarize={() => ai.summarize(getCurrentChapterText())}
-            onAsk={(q) => ai.ask(q, getCurrentChapterText())}
-            onHighlights={() => ai.highlights(getCurrentChapterText())}
-            onExplain={(sel) => ai.explain(sel, getCurrentChapterText())}
-            selectedText={selectedText}
-            loading={ai.loading}
-            error={ai.error}
-            available={ai.available}
-            onSignIn={signIn}
-            onClose={() => setShowAI(false)}
+          <Reader
+            book={currentBook}
+            position={position}
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
+            highlights={highlights.items}
+            onPositionChange={handlePositionChange}
+            onSelectionAction={handleSelectionAction}
+            onHighlightClick={(id, rect) => setEditing({ id, rect })}
+            hasExplain={ai.available}
+            aiAvailable={ai.available}
+            pendingFragment={pendingFragment}
+            onPendingFragmentConsumed={onPendingFragmentConsumed}
           />
         )}
+      </AppShell>
 
-        {showHighlights && currentBook && (
-          <HighlightsPanel
-            items={highlights.items}
-            onJump={(h) => handlePositionChange(h.anchor.chapterIndex, 0, 0)}
-            onClose={() => setShowHighlights(false)}
-          />
-        )}
-
-        {showWords && (
-          <WordsPanel
-            items={vocab.items}
-            currentBookHash={currentBook?.hash ?? null}
-            dueCount={vocab.dueCount}
-            onClose={() => setShowWords(false)}
-            onDelete={(id) => vocab.unsave(id)}
-            onResetStage={(id) => vocab.resetStage(id)}
-            onReview={() => setShowReview(true)}
-            onQuiz={() => setShowQuiz(true)}
-          />
-        )}
-      </div>
-
-      {showLibrary && (
-        <Library books={library} currentHash={currentBook?.hash ?? null} onSelect={switchBook} onUpload={uploadBook} onDelete={removeBook} onClose={() => setShowLibrary(false)} />
-      )}
       {dict && currentBook && (
         <DictionaryPopup
           loading={dict.loading}
@@ -492,7 +495,15 @@ export default function App() {
         />
       )}
       {showSettings && (
-        <Settings settings={settings} onChange={handleSettingsChange} onClose={() => setShowSettings(false)} isPdf={currentBook?.format === "pdf"} />
+        <Settings
+          settings={settings}
+          onChange={handleSettingsChange}
+          onClose={() => setShowSettings(false)}
+          isPdf={currentBook?.format === "pdf"}
+          theme={theme}
+          isAuthenticated={!!user}
+          onSignIn={signIn}
+        />
       )}
       {editing && (() => {
         const h = highlights.items.find((x) => x.id === editing.id);
@@ -521,6 +532,255 @@ export default function App() {
           onClose={() => setShowQuiz(false)}
         />
       )}
+    </>
+  );
+}
+
+const ACCEPTED_BOOK_EXTENSIONS = ".epub,.pdf,.txt,.text";
+const SUPPORTED_BOOK_FORMAT_PILLS: ReadonlyArray<{ label: string; colorClass: string }> = [
+  { label: "EPUB", colorClass: "bg-matcha-300" },
+  { label: "PDF", colorClass: "bg-pomegranate-400" },
+  { label: "TXT", colorClass: "bg-slushie-500" },
+];
+
+interface EmptyStateHeroProps {
+  onUploadBook: (file: File) => void;
+  onSignIn: () => void;
+  showSignIn: boolean;
+  error: string | null;
+}
+
+function EmptyStateHero({ onUploadBook, onSignIn, showSignIn, error }: EmptyStateHeroProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const openFilePicker = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) onUploadBook(file);
+      // Reset value so the user can re-select the same file later.
+      event.target.value = "";
+    },
+    [onUploadBook],
+  );
+
+  const handleDragEnter = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingFile(true);
+  }, []);
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingFile(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingFile(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDraggingFile(false);
+      const file = event.dataTransfer.files?.[0];
+      if (file) onUploadBook(file);
+    },
+    [onUploadBook],
+  );
+
+  return (
+    <div className="h-full flex flex-col items-center justify-center bg-cream text-clay-black fade-in">
+      <div
+        className={`text-center max-w-sm px-6 py-8 rounded-[24px] transition-colors ${
+          isDraggingFile ? "bg-clay-white clay-shadow" : ""
+        }`}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <img
+          src="/BookFlipSmall.jpg"
+          alt="Instant Book Reader"
+          className="w-24 h-24 mx-auto mb-8 rounded-[24px] object-cover clay-shadow"
+        />
+
+        <h1 className="text-4xl font-semibold tracking-tight mb-2" style={{ letterSpacing: "-1.6px" }}>
+          Instant Reader
+        </h1>
+        <p className="text-charcoal mb-10">Your reading space, always one tab away.</p>
+
+        <button
+          onClick={openFilePicker}
+          className="clay-btn-solid w-full text-lg !py-3 !rounded-[12px]"
+        >
+          Open a Book
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_BOOK_EXTENSIONS}
+          onChange={handleFileInputChange}
+          className="hidden"
+          aria-hidden="true"
+        />
+
+        <div className="mt-8 flex items-center justify-center gap-4">
+          {SUPPORTED_BOOK_FORMAT_PILLS.map((formatPill) => (
+            <span key={formatPill.label} className="flex items-center gap-1.5 text-xs text-silver">
+              <span className={`w-1.5 h-1.5 rounded-full ${formatPill.colorClass}`} /> {formatPill.label}
+            </span>
+          ))}
+        </div>
+
+        <p className="mt-3 text-xs text-silver">
+          Everything stays on your device &middot; Works offline
+        </p>
+
+        {showSignIn && (
+          <button
+            onClick={onSignIn}
+            className="mt-5 text-xs text-silver hover:text-matcha-600 transition-colors underline underline-offset-2"
+          >
+            Sign in for cloud sync &amp; AI
+          </button>
+        )}
+
+        {error && (
+          <p className="mt-4 text-sm text-pomegranate-400 bg-pomegranate-400/10 px-4 py-2 rounded-[12px]">{error}</p>
+        )}
+      </div>
     </div>
   );
+}
+
+function stripHtmlForCount(html: string): string {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
+interface LeftPanelRenderArgs {
+  activePanelId: "toc" | "library" | null;
+  book: ReturnType<typeof useBook>["currentBook"];
+  chapterIndex: number;
+  library: ReturnType<typeof useBook>["library"];
+  progressByHash: Record<string, number>;
+  onJumpToTocNode: (node: TocNode) => void;
+  onSelectBook: (hash: string) => void;
+  onUploadBook: (file: File) => void;
+  onDeleteBook: (hash: string) => void;
+}
+
+function renderLeftPanelContent({
+  activePanelId,
+  book,
+  chapterIndex,
+  library,
+  progressByHash,
+  onJumpToTocNode,
+  onSelectBook,
+  onUploadBook,
+  onDeleteBook,
+}: LeftPanelRenderArgs): React.ReactNode {
+  if (activePanelId === "toc") {
+    if (!book) {
+      return (
+        <p className="text-xs text-silver text-center py-12 px-4">No book is open.</p>
+      );
+    }
+    return (
+      <TocPanel
+        book={book}
+        currentChapterIndex={chapterIndex}
+        onJump={onJumpToTocNode}
+      />
+    );
+  }
+  if (activePanelId === "library") {
+    return (
+      <LibraryPanel
+        books={library}
+        currentHash={book?.hash ?? null}
+        progressByHash={progressByHash}
+        onSelect={onSelectBook}
+        onUpload={onUploadBook}
+        onDelete={onDeleteBook}
+      />
+    );
+  }
+  return null;
+}
+
+interface RightPanelRenderArgs {
+  activePanelId: "ai" | "highlights" | "words" | null;
+  ai: ReturnType<typeof useAI>;
+  selectedText: string;
+  autoExplainText: string | null;
+  onAutoExplainConsumed: () => void;
+  onSignIn: () => void;
+  highlights: ReturnType<typeof useHighlights>["items"];
+  onJumpToHighlight: (highlight: ReturnType<typeof useHighlights>["items"][number]) => void;
+  vocab: ReturnType<typeof useVocab>;
+  currentBookHash: string | null;
+  onReview: () => void;
+  onQuiz: () => void;
+  getCurrentChapterText: () => string;
+}
+
+function renderRightPanelContent({
+  activePanelId,
+  ai,
+  selectedText,
+  autoExplainText,
+  onAutoExplainConsumed,
+  onSignIn,
+  highlights,
+  onJumpToHighlight,
+  vocab,
+  currentBookHash,
+  onReview,
+  onQuiz,
+  getCurrentChapterText,
+}: RightPanelRenderArgs): React.ReactNode {
+  if (activePanelId === "ai") {
+    return (
+      <AIPanel
+        onSummarize={() => ai.summarize(getCurrentChapterText())}
+        onAsk={(question) => ai.ask(question, getCurrentChapterText())}
+        onHighlights={() => ai.highlights(getCurrentChapterText())}
+        onExplain={(selection) => ai.explain(selection, getCurrentChapterText())}
+        selectedText={selectedText}
+        autoExplainText={autoExplainText}
+        onAutoExplainConsumed={onAutoExplainConsumed}
+        loading={ai.loading}
+        error={ai.error}
+        available={ai.available}
+        onSignIn={onSignIn}
+      />
+    );
+  }
+  if (activePanelId === "highlights") {
+    return <HighlightsPanel items={highlights} onJump={onJumpToHighlight} />;
+  }
+  if (activePanelId === "words") {
+    return (
+      <WordsPanel
+        items={vocab.items}
+        currentBookHash={currentBookHash}
+        dueCount={vocab.dueCount}
+        onDelete={(id) => vocab.unsave(id)}
+        onResetStage={(id) => vocab.resetStage(id)}
+        onReview={onReview}
+        onQuiz={onQuiz}
+      />
+    );
+  }
+  return null;
 }

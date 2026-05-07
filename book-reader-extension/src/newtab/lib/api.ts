@@ -1,59 +1,30 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+/**
+ * Public API surface of the extension.
+ *
+ * Non-AI endpoints (auth, position sync, highlights, vocab) keep their
+ * existing shapes and call the shared `request` helper from `lib/http.ts`.
+ *
+ * AI endpoints keep their public signatures + return shapes
+ * (`{summary}`, `{answer}`, `{highlights}`, `{explanation}`,
+ * `{translation, detectedLang?}`) but their bodies now route through
+ * `getAiClient(bookHash)` so direct provider calls work the same as
+ * the server fallback.
+ */
 
-// Share the API URL with the service worker so it doesn't need to hardcode it
-try {
-  if (typeof chrome !== "undefined" && chrome.storage?.local) {
-    chrome.storage.local.set({ api_url: API_BASE });
-  }
-} catch { /* not in extension context */ }
+export {
+  setAuthToken,
+  getAuthToken,
+  isAuthenticated,
+  isOnline,
+} from "./http";
 
-let authToken: string | null = null;
+import { request } from "./http";
+import { getAiClient } from "./ai/router";
 
-export function setAuthToken(token: string | null) {
-  authToken = token;
-}
+// ── Auth ─────────────────────────────────────────────────────────────────────
 
-export function isAuthenticated(): boolean {
-  return authToken !== null;
-}
-
-export function isOnline(): boolean {
-  return navigator.onLine;
-}
-
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  if (!navigator.onLine) {
-    throw new Error("You are offline");
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  };
-
-  if (authToken) {
-    headers["Authorization"] = `Bearer ${authToken}`;
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
-
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`API error ${res.status}: ${error}`);
-  }
-
-  return res.json();
-}
-
-// Auth
 export async function authenticateWithGoogle(
-  idToken: string
+  idToken: string,
 ): Promise<{ token: string; user: { id: string; email: string; name: string } }> {
   return request("/auth/google", {
     method: "POST",
@@ -61,7 +32,8 @@ export async function authenticateWithGoogle(
   });
 }
 
-// Position sync
+// ── Position sync ────────────────────────────────────────────────────────────
+
 export interface RemotePosition {
   bookHash: string;
   bookTitle: string;
@@ -76,7 +48,7 @@ export async function syncPosition(
   bookTitle: string,
   chapterIndex: number,
   scrollOffset: number,
-  percentage: number
+  percentage: number,
 ): Promise<RemotePosition> {
   return request(`/position/${bookHash}`, {
     method: "PUT",
@@ -84,9 +56,7 @@ export async function syncPosition(
   });
 }
 
-export async function getRemotePosition(
-  bookHash: string
-): Promise<RemotePosition | null> {
+export async function getRemotePosition(bookHash: string): Promise<RemotePosition | null> {
   try {
     return await request(`/position/${bookHash}`);
   } catch {
@@ -94,59 +64,48 @@ export async function getRemotePosition(
   }
 }
 
-// AI features
+// ── AI features ──────────────────────────────────────────────────────────────
+
 export async function aiSummarize(
   bookHash: string,
-  chapterText: string
+  chapterText: string,
 ): Promise<{ summary: string }> {
-  return request("/ai/summarize", {
-    method: "POST",
-    body: JSON.stringify({ bookHash, text: chapterText }),
-  });
+  return { summary: await getAiClient(bookHash).summarize(chapterText) };
 }
 
 export async function aiAsk(
   bookHash: string,
   question: string,
-  context: string
+  context: string,
 ): Promise<{ answer: string }> {
-  return request("/ai/ask", {
-    method: "POST",
-    body: JSON.stringify({ bookHash, question, context }),
-  });
+  return { answer: await getAiClient(bookHash).ask(question, context) };
 }
 
 export async function aiHighlights(
   bookHash: string,
-  chapterText: string
+  chapterText: string,
 ): Promise<{ highlights: string[] }> {
-  return request("/ai/highlights", {
-    method: "POST",
-    body: JSON.stringify({ bookHash, text: chapterText }),
-  });
+  return { highlights: await getAiClient(bookHash).highlights(chapterText) };
 }
 
 export async function aiExplain(
   bookHash: string,
   selection: string,
-  context: string
+  context: string,
 ): Promise<{ explanation: string }> {
-  return request("/ai/explain", {
-    method: "POST",
-    body: JSON.stringify({ bookHash, selection, context }),
-  });
+  return { explanation: await getAiClient(bookHash).explain(selection, context) };
 }
 
 export async function aiTranslate(
   bookHash: string,
   text: string,
-  targetLang: string
+  targetLang: string,
 ): Promise<{ translation: string; detectedLang?: string }> {
-  return request("/ai/translate", {
-    method: "POST",
-    body: JSON.stringify({ bookHash, text, targetLang }),
-  });
+  const result = await getAiClient(bookHash).translate(text, targetLang);
+  return { translation: result.text, detectedLang: result.detectedLang };
 }
+
+// ── Highlights sync ──────────────────────────────────────────────────────────
 
 export interface RemoteHighlight {
   id: string;
@@ -181,7 +140,7 @@ export async function putRemoteHighlight(
     text: string;
     color: string;
     note?: string | null;
-  }
+  },
 ): Promise<{ id: string; clientId: string }> {
   return request(`/highlights/${bookHash}/${clientId}`, {
     method: "PUT",
@@ -192,6 +151,8 @@ export async function putRemoteHighlight(
 export async function deleteRemoteHighlight(bookHash: string, clientId: string): Promise<void> {
   await request(`/highlights/${bookHash}/${clientId}`, { method: "DELETE" });
 }
+
+// ── Vocabulary sync ──────────────────────────────────────────────────────────
 
 export interface RemoteVocabWord {
   id: string;
@@ -229,7 +190,7 @@ export async function putRemoteVocab(
     nextReviewAt: number;
     lastReviewAt: number | null;
     correctStreak: number;
-  }
+  },
 ): Promise<{ id: string; clientId: string }> {
   return request(`/vocabulary/${clientId}`, {
     method: "PUT",

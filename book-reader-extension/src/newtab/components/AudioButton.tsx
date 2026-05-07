@@ -1,4 +1,5 @@
 import React from "react";
+import Tooltip from "./Tooltip";
 
 interface Props {
   text: string;
@@ -55,16 +56,17 @@ export default function AudioButton({ text, url, size = 14, className = "", lang
   };
 
   return (
-    <button
-      onClick={play}
-      aria-label={`Pronounce ${text}`}
-      title="Pronounce"
-      className={`p-1 rounded-[6px] text-silver hover:text-clay-black hover:bg-oat/40 transition-colors ${className}`}
-    >
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 6v4h2.5L9 13V3L5.5 6H3z" />
-        <path d="M11.5 5.5a3 3 0 0 1 0 5" />
-      </svg>
-    </button>
+    <Tooltip label="Pronounce" position="top">
+      <button
+        onClick={play}
+        aria-label={`Pronounce ${text}`}
+        className={`clay-btn-icon !p-1 ${className}`}
+      >
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6v4h2.5L9 13V3L5.5 6H3z" />
+          <path d="M11.5 5.5a3 3 0 0 1 0 5" />
+        </svg>
+      </button>
+    </Tooltip>
   );
 }

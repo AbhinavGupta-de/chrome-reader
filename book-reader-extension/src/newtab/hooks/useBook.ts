@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { parseEpub, ParsedEpub } from "../lib/parsers/epub";
 import { parsePdf, ParsedPdf } from "../lib/parsers/pdf";
 import { parseTxt, ParsedTxt } from "../lib/parsers/txt";
@@ -13,6 +13,7 @@ import {
   getCurrentBook,
   setCurrentBook,
   BookMetadata,
+  POSITION_KEY_PREFIX,
 } from "../lib/storage";
 
 export type BookFormat = "epub" | "pdf" | "txt";
@@ -39,11 +40,30 @@ function detectFormat(file: File): BookFormat | null {
   return null;
 }
 
+async function loadProgressByHashFromStorage(): Promise<Record<string, number>> {
+  // Passing null asks chrome to return every key in the area. The stub
+  // honours this; the real chrome typings accept it via the union signature.
+  const all = (await (chrome.storage.local as unknown as {
+    get(key: null): Promise<Record<string, unknown>>;
+  }).get(null)) as Record<string, unknown>;
+  const progress: Record<string, number> = {};
+  for (const [key, value] of Object.entries(all)) {
+    if (!key.startsWith(POSITION_KEY_PREFIX)) continue;
+    const hash = key.slice(POSITION_KEY_PREFIX.length);
+    const position = value as { percentage?: number } | null | undefined;
+    if (position && typeof position.percentage === "number") {
+      progress[hash] = position.percentage;
+    }
+  }
+  return progress;
+}
+
 export function useBook() {
   const [currentBook, setCurrentBookState] = useState<LoadedBook | null>(null);
   const [library, setLibrary] = useState<BookMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressByHash, setProgressByHash] = useState<Record<string, number>>({});
 
   const loadLibrary = useCallback(async () => {
     const metas = await getAllBookMetas();
@@ -80,6 +100,13 @@ export function useBook() {
 
       setCurrentBookState(loaded);
       await setCurrentBook(hash);
+
+      // Stamp lastOpenedAt so the LibraryPanel can sort by recency.
+      const updatedMeta: BookMetadata = { ...meta, lastOpenedAt: Date.now() };
+      await saveBookMeta(updatedMeta);
+      setLibrary((prev) =>
+        prev.map((entry) => (entry.hash === hash ? updatedMeta : entry)),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load book");
     } finally {
@@ -179,11 +206,52 @@ export function useBook() {
     })();
   }, [loadLibrary, loadBookFromHash]);
 
+  // Initial progress load — read every `pos_*` key once on mount.
+  useEffect(() => {
+    loadProgressByHashFromStorage().then(setProgressByHash);
+  }, []);
+
+  // Keep progress map in sync with cross-tab writes / within-session updates.
+  useEffect(() => {
+    const handleStorageChanged = (
+      changes: Record<string, { newValue?: unknown }>,
+      areaName: string,
+    ): void => {
+      if (areaName !== "local") return;
+      let touched = false;
+      const next: Record<string, number> = { ...progressByHashRef.current };
+      for (const [key, change] of Object.entries(changes)) {
+        if (!key.startsWith(POSITION_KEY_PREFIX)) continue;
+        const hash = key.slice(POSITION_KEY_PREFIX.length);
+        const position = change.newValue as { percentage?: number } | undefined;
+        if (position && typeof position.percentage === "number") {
+          next[hash] = position.percentage;
+          touched = true;
+        } else if (change.newValue === undefined && hash in next) {
+          delete next[hash];
+          touched = true;
+        }
+      }
+      if (touched) {
+        progressByHashRef.current = next;
+        setProgressByHash(next);
+      }
+    };
+    chrome.storage.onChanged.addListener(handleStorageChanged);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChanged);
+  }, []);
+
+  const progressByHashRef = useRef<Record<string, number>>({});
+  useEffect(() => {
+    progressByHashRef.current = progressByHash;
+  }, [progressByHash]);
+
   return {
     currentBook,
     library,
     loading,
     error,
+    progressByHash,
     uploadBook,
     removeBook,
     switchBook,
