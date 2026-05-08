@@ -39,12 +39,16 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
   const [showColors, setShowColors] = React.useState(false);
   const overlapping = overlappingHighlightIds ?? [];
   const hasOverlap = overlapping.length > 0;
+  const keepSelectionAlive = React.useCallback((event: React.PointerEvent<HTMLElement>) => {
+    event.preventDefault();
+  }, []);
+  const buttonClass = "text-xs !py-1 !px-2 clay-btn-white pointer-events-auto";
 
   return (
     <div
-      className="fixed z-50 -translate-x-1/2 clay-card flex items-center gap-1 !rounded-[1584px] px-2 py-1 shadow-md"
+      data-selection-toolbar
+      className="fixed z-50 -translate-x-1/2 clay-card flex items-center gap-1 !rounded-[1584px] px-2 py-1 shadow-md pointer-events-none select-none"
       style={{ top, left }}
-      onMouseDown={(e) => e.preventDefault()} // keep selection alive
     >
       {showColors ? (
         <>
@@ -52,8 +56,9 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
             <Tooltip key={c} label={`Highlight ${c}`} position="top" delay={200}>
               <button
                 aria-label={`Highlight ${c}`}
-                className="w-6 h-6 rounded-full border border-oat"
+                className="w-6 h-6 rounded-full border border-oat pointer-events-auto"
                 style={{ background: COLOR_SWATCH[c] }}
+                onPointerDown={keepSelectionAlive}
                 onClick={() => {
                   onAction("highlight", { color: c });
                   setShowColors(false);
@@ -62,7 +67,8 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
             </Tooltip>
           ))}
           <button
-            className="text-xs px-2 text-silver"
+            className="text-xs px-2 text-silver pointer-events-auto"
+            onPointerDown={keepSelectionAlive}
             onClick={() => setShowColors(false)}
           >
             cancel
@@ -73,7 +79,8 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
           {hasOverlap ? (
             <Tooltip label="Remove existing highlight" position="top" delay={200}>
               <button
-                className="text-xs !py-1 !px-2.5 clay-btn-white text-pomegranate-400 inline-flex items-center gap-1"
+                className="text-xs !py-1 !px-2.5 clay-btn-white text-pomegranate-400 inline-flex items-center gap-1 pointer-events-auto"
+                onPointerDown={keepSelectionAlive}
                 onClick={() => onAction("remove_highlight", { highlightIds: overlapping })}
               >
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -84,31 +91,31 @@ export default function SelectionToolbar({ rect, hasExplain, aiAvailable, isPdf,
             </Tooltip>
           ) : (
             <Tooltip label="Highlight selected text" position="top" delay={200}>
-              <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => setShowColors(true)}>
+              <button className={buttonClass} onPointerDown={keepSelectionAlive} onClick={() => setShowColors(true)}>
                 Highlight
               </button>
             </Tooltip>
           )}
           <Tooltip label="Look up definition" position="top" delay={200}>
-            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("define")}>
+            <button className={buttonClass} onPointerDown={keepSelectionAlive} onClick={() => onAction("define")}>
               Define
             </button>
           </Tooltip>
           {aiAvailable && (
             <Tooltip label="Translate to your language" position="top" delay={200}>
-              <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("translate")}>
+              <button className={buttonClass} onPointerDown={keepSelectionAlive} onClick={() => onAction("translate")}>
                 Translate
               </button>
             </Tooltip>
           )}
           <Tooltip label="Search on Google" position="top" delay={200}>
-            <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("search")}>
+            <button className={buttonClass} onPointerDown={keepSelectionAlive} onClick={() => onAction("search")}>
               Web
             </button>
           </Tooltip>
           {hasExplain && (
             <Tooltip label="Explain with AI" position="top" delay={200}>
-              <button className="text-xs !py-1 !px-2 clay-btn-white" onClick={() => onAction("explain")}>
+              <button className={buttonClass} onPointerDown={keepSelectionAlive} onClick={() => onAction("explain")}>
                 Explain
               </button>
             </Tooltip>

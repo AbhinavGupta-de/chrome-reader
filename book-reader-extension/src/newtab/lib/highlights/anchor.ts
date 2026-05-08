@@ -106,22 +106,20 @@ export function offsetsFromRange(
   container: HTMLElement,
   range: Range
 ): { startOffset: number; length: number } | null {
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  let consumed = 0;
-  let start = -1;
-  let end = -1;
-  let n: Node | null = walker.nextNode();
-  while (n) {
-    const t = n as Text;
-    const len = t.data.length;
-    if (t === range.startContainer) start = consumed + range.startOffset;
-    if (t === range.endContainer) {
-      end = consumed + range.endOffset;
-      break;
-    }
-    consumed += len;
-    n = walker.nextNode();
+  if (!container.contains(range.commonAncestorContainer)) return null;
+
+  const doc = container.ownerDocument;
+  const before = doc.createRange();
+  before.selectNodeContents(container);
+
+  try {
+    before.setEnd(range.startContainer, range.startOffset);
+  } catch {
+    return null;
   }
-  if (start === -1 || end === -1 || end <= start) return null;
-  return { startOffset: start, length: end - start };
+
+  const startOffset = before.toString().length;
+  const length = range.toString().length;
+  if (length <= 0) return null;
+  return { startOffset, length };
 }

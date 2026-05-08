@@ -6,7 +6,7 @@ import PdfSingleView from "./PdfSingleView";
 import PdfContinuousView from "./PdfContinuousView";
 import PdfSpreadView from "./PdfSpreadView";
 import { ReaderSettings } from "../../lib/storage";
-import { useSelection } from "../../hooks/useSelection";
+import { useSelection, type SelectionOffsets } from "../../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "../SelectionToolbar";
 import { findOverlappingHighlights, offsetsFromRange } from "../../lib/highlights/anchor";
 import { useActiveThemePdfTint } from "../../hooks/useActiveThemePdfTint";
@@ -23,7 +23,7 @@ interface PdfViewerProps {
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction?: (
     action: ToolbarAction,
-    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }
+    payload: { text: string; range: Range; rect: DOMRect; offsets?: SelectionOffsets; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }
   ) => void;
   hasExplain?: boolean;
   aiAvailable?: boolean;
@@ -122,7 +122,7 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
     onSettingsChange({ ...settingsRef.current, pdfShowThumbnailStrip: nextValue });
   }, [onSettingsChange]);
 
-  const selection = useSelection(containerEl);
+  const { selection, clearSelection } = useSelection(containerEl);
 
   const overlappingHighlightIds = useMemo(() => {
     if (!selection) return [];
@@ -142,20 +142,19 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
   const dispatchAction = useCallback(
     (action: ToolbarAction, payload?: { color?: HighlightColor; highlightIds?: string[] }) => {
       if (!selection || !onSelectionAction) return;
+      const currentSelection = selection;
       onSelectionAction(action, {
-        text: selection.text,
-        range: selection.range,
-        rect: selection.rect,
+        text: currentSelection.text,
+        range: currentSelection.range,
+        rect: currentSelection.rect,
         color: payload?.color,
         highlightIds: payload?.highlightIds,
         chapterIndex: currentPageRef.current - 1,
         chapterText: "",
       });
-      if (action !== "highlight") {
-        window.getSelection()?.removeAllRanges();
-      }
+      if (action === "highlight" || action === "remove_highlight") clearSelection();
     },
-    [selection, onSelectionAction]
+    [selection, onSelectionAction, clearSelection]
   );
 
   useEffect(() => {

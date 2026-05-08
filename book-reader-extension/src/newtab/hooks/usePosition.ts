@@ -12,6 +12,13 @@ interface UsePositionOptions {
   enabled: boolean;
 }
 
+function shouldPublishPosition(prev: ReadingPosition | null, next: ReadingPosition): boolean {
+  if (!prev) return true;
+  if (prev.bookHash !== next.bookHash) return true;
+  if (prev.chapterIndex !== next.chapterIndex) return true;
+  return Math.round(prev.percentage) !== Math.round(next.percentage);
+}
+
 export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions) {
   const [position, setPositionState] = useState<ReadingPosition | null>(null);
   const positionRef = useRef<ReadingPosition | null>(null);
@@ -77,7 +84,7 @@ export function usePosition({ bookHash, bookTitle, enabled }: UsePositionOptions
         updatedAt: Date.now(),
       };
 
-      setPositionState(pos);
+      setPositionState((prev) => (shouldPublishPosition(prev, pos) ? pos : prev));
       positionRef.current = pos;
 
       clearTimeout(saveTimerRef.current);

@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useMemo, useState } from "react"
 import { LoadedBook } from "../hooks/useBook";
 import { ReadingPosition, ReaderSettings } from "../lib/storage";
 import PdfViewer from "./pdf/PdfViewer";
-import { useSelection } from "../hooks/useSelection";
+import { useSelection, type SelectionOffsets } from "../hooks/useSelection";
 import SelectionToolbar, { ToolbarAction, HighlightColor } from "./SelectionToolbar";
 import { Highlight } from "../lib/highlights/types";
 import { renderHighlights, clearHighlights } from "../lib/highlights/render";
@@ -17,7 +17,7 @@ interface ReaderProps {
   onPositionChange: (chapterIndex: number, scrollOffset: number, percentage: number) => void;
   onSelectionAction: (
     action: ToolbarAction,
-    payload: { text: string; range: Range; rect: DOMRect; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }
+    payload: { text: string; range: Range; rect: DOMRect; offsets?: SelectionOffsets; color?: HighlightColor; highlightIds?: string[]; chapterIndex: number; chapterText: string }
   ) => void;
   onHighlightClick: (id: string, rect: DOMRect) => void;
   hasExplain: boolean;
@@ -50,7 +50,7 @@ function cleanChapterLabel(label: string): string {
   return label.trim();
 }
 
-export default function Reader({
+function Reader({
   book, position, settings, onSettingsChange, highlights, onPositionChange, onSelectionAction, onHighlightClick, hasExplain, aiAvailable,
   pendingFragment = null, onPendingFragmentConsumed,
 }: ReaderProps) {
@@ -60,9 +60,14 @@ export default function Reader({
   const restoredRef = useRef(false);
   const [showNav, setShowNav] = useState(false);
   const [contentEl, setContentEl] = useState<HTMLDivElement | null>(null);
+  const [proseEl, setProseEl] = useState<HTMLDivElement | null>(null);
   const attachContentRef = useCallback((el: HTMLDivElement | null) => {
     contentRef.current = el;
     setContentEl(el);
+  }, []);
+  const attachProseRef = useCallback((el: HTMLDivElement | null) => {
+    proseRef.current = el;
+    setProseEl(el);
   }, []);
 
   const chapterIndex = position?.chapterIndex ?? 0;
@@ -160,11 +165,11 @@ export default function Reader({
     if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [totalSections, onPositionChange]);
 
-  const selection = useSelection(contentEl);
+  const { selection, clearSelection } = useSelection(contentEl, { anchorContainer: proseEl });
 
   const overlappingHighlightIds = useMemo(() => {
     if (!selection || !proseRef.current) return [];
-    const offs = offsetsFromRange(proseRef.current, selection.range);
+    const offs = selection.offsets ?? offsetsFromRange(proseRef.current, selection.range);
     if (!offs) return [];
     return findOverlappingHighlights(highlights, chapterIndex, offs.startOffset, offs.length);
   }, [selection, highlights, chapterIndex]);
@@ -172,20 +177,20 @@ export default function Reader({
   const dispatchAction = useCallback(
     (action: ToolbarAction, payload?: { color?: HighlightColor; highlightIds?: string[] }) => {
       if (!selection) return;
+      const currentSelection = selection;
       onSelectionAction(action, {
-        text: selection.text,
-        range: selection.range,
-        rect: selection.rect,
+        text: currentSelection.text,
+        range: currentSelection.range,
+        rect: currentSelection.rect,
+        offsets: currentSelection.offsets,
         color: payload?.color,
         highlightIds: payload?.highlightIds,
         chapterIndex,
         chapterText: plainText,
       });
-      if (action !== "highlight") {
-        window.getSelection()?.removeAllRanges();
-      }
+      if (action === "highlight" || action === "remove_highlight") clearSelection();
     },
-    [selection, onSelectionAction, chapterIndex, plainText]
+    [selection, onSelectionAction, chapterIndex, plainText, clearSelection]
   );
 
   useEffect(() => {
@@ -240,7 +245,7 @@ export default function Reader({
         </div>
 
         <div className="max-w-2xl mx-auto px-6 pb-28">
-          <div ref={proseRef} className="prose-reader" dangerouslySetInnerHTML={{ __html: content }} />
+          <div ref={attachProseRef} className="prose-reader" dangerouslySetInnerHTML={{ __html: content }} />
         </div>
 
         {content && (
@@ -328,3 +333,5 @@ export default function Reader({
     </div>
   );
 }
+
+export default React.memo(Reader);

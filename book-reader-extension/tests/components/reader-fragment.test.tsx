@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Reader from "../../src/newtab/components/Reader";
 import { DEFAULT_SETTINGS, type ReadingPosition } from "../../src/newtab/lib/storage";
 import type { LoadedBook } from "../../src/newtab/hooks/useBook";
@@ -36,7 +36,42 @@ const initialPosition: ReadingPosition = {
   updatedAt: 0,
 };
 
-describe("Reader pendingFragment scroll", () => {
+function selectTextOffsets(container: HTMLElement, startOffset: number, endOffset: number) {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  let consumed = 0;
+  let startNode: Text | null = null;
+  let startNodeOffset = 0;
+  let endNode: Text | null = null;
+  let endNodeOffset = 0;
+  let node = walker.nextNode();
+
+  while (node) {
+    const text = node as Text;
+    const nextConsumed = consumed + text.data.length;
+    if (!startNode && nextConsumed >= startOffset) {
+      startNode = text;
+      startNodeOffset = startOffset - consumed;
+    }
+    if (!endNode && nextConsumed >= endOffset) {
+      endNode = text;
+      endNodeOffset = endOffset - consumed;
+      break;
+    }
+    consumed = nextConsumed;
+    node = walker.nextNode();
+  }
+
+  if (!startNode || !endNode) throw new Error("Could not map text offsets to DOM range");
+  const range = document.createRange();
+  range.setStart(startNode, startNodeOffset);
+  range.setEnd(endNode, endNodeOffset);
+  const sel = window.getSelection()!;
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.dispatchEvent(new Event("selectionchange"));
+}
+
+describe("Reader", () => {
   let scrollSpy: ReturnType<typeof vi.spyOn> | null = null;
   let originalRaf: typeof window.requestAnimationFrame;
 
@@ -60,6 +95,7 @@ describe("Reader pendingFragment scroll", () => {
   afterEach(() => {
     scrollSpy?.mockRestore();
     window.requestAnimationFrame = originalRaf;
+    window.getSelection()?.removeAllRanges();
   });
 
   it("scrollsToFragmentByIdAndCallsConsumedCallback", async () => {
@@ -127,5 +163,42 @@ describe("Reader pendingFragment scroll", () => {
       />,
     );
     await waitFor(() => expect(onPendingFragmentConsumed).toHaveBeenCalledTimes(1));
+  });
+
+  it("passes stable EPUB offsets when highlighting selected prose across markup", async () => {
+    const book = buildEpubBook(`<p>hello <strong>wide</strong> world</p>`);
+    const onSelectionAction = vi.fn();
+    render(
+      <Reader
+        book={book}
+        position={initialPosition}
+        settings={DEFAULT_SETTINGS}
+        onSettingsChange={() => undefined}
+        highlights={[]}
+        onPositionChange={() => undefined}
+        onSelectionAction={onSelectionAction}
+        onHighlightClick={() => undefined}
+        hasExplain={false}
+        aiAvailable={false}
+      />,
+    );
+
+    const prose = document.querySelector(".prose-reader") as HTMLElement;
+    act(() => {
+      selectTextOffsets(prose, 3, 14);
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Highlight" }));
+    fireEvent.click(await screen.findByLabelText("Highlight yellow"));
+
+    await waitFor(() => {
+      expect(onSelectionAction).toHaveBeenCalledWith(
+        "highlight",
+        expect.objectContaining({
+          text: "lo wide wor",
+          offsets: { startOffset: 3, length: 11 },
+        }),
+      );
+    });
   });
 });

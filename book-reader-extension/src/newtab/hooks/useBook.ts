@@ -58,6 +58,10 @@ async function loadProgressByHashFromStorage(): Promise<Record<string, number>> 
   return progress;
 }
 
+function shouldPublishProgress(previous: number | undefined, next: number): boolean {
+  return typeof previous !== "number" || Math.round(previous) !== Math.round(next);
+}
+
 export function useBook() {
   const [currentBook, setCurrentBookState] = useState<LoadedBook | null>(null);
   const [library, setLibrary] = useState<BookMetadata[]>([]);
@@ -219,21 +223,32 @@ export function useBook() {
     ): void => {
       if (areaName !== "local") return;
       let touched = false;
-      const next: Record<string, number> = { ...progressByHashRef.current };
+      let next: Record<string, number> | null = null;
+      const draftProgress = (): Record<string, number> => {
+        if (!next) next = { ...progressByHashRef.current };
+        return next;
+      };
       for (const [key, change] of Object.entries(changes)) {
         if (!key.startsWith(POSITION_KEY_PREFIX)) continue;
         const hash = key.slice(POSITION_KEY_PREFIX.length);
         const position = change.newValue as { percentage?: number } | undefined;
         if (position && typeof position.percentage === "number") {
-          next[hash] = position.percentage;
-          touched = true;
-        } else if (change.newValue === undefined && hash in next) {
-          delete next[hash];
+          const previous = progressByHashRef.current[hash];
+          draftProgress()[hash] = position.percentage;
+          if (shouldPublishProgress(previous, position.percentage)) {
+            touched = true;
+          }
+        } else if (change.newValue === undefined && hash in progressByHashRef.current) {
+          delete draftProgress()[hash];
           touched = true;
         }
       }
-      if (touched) {
+      if (next) {
+        // Keep the ref exact for future comparisons, but publish React state
+        // only when rounded display progress changes.
         progressByHashRef.current = next;
+      }
+      if (touched && next) {
         setProgressByHash(next);
       }
     };

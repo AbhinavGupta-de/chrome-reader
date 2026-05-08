@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildAnchor, resolveAnchor, anchorRangeFromDom } from "../../../src/newtab/lib/highlights/anchor";
+import { buildAnchor, resolveAnchor, anchorRangeFromDom, offsetsFromRange } from "../../../src/newtab/lib/highlights/anchor";
 
 describe("buildAnchor", () => {
   it("captures offsets and bounded context", () => {
@@ -49,6 +49,35 @@ describe("anchorRangeFromDom", () => {
       const r = anchorRangeFromDom(host, 10, 5);
       expect(r).not.toBeNull();
       expect(r!.toString()).toBe("brown");
+    } finally {
+      host.remove();
+    }
+  });
+});
+
+describe("offsetsFromRange", () => {
+  it("maps text-node ranges to plain-text offsets", () => {
+    const host = document.createElement("div");
+    host.innerHTML = "<p>The quick <b>brown</b> fox</p>";
+    document.body.appendChild(host);
+    try {
+      const r = anchorRangeFromDom(host, 10, 5);
+      expect(r).not.toBeNull();
+      expect(offsetsFromRange(host, r!)).toEqual({ startOffset: 10, length: 5 });
+    } finally {
+      host.remove();
+    }
+  });
+
+  it("maps element-boundary ranges to plain-text offsets", () => {
+    const host = document.createElement("div");
+    host.innerHTML = "<p>The quick <b>brown</b> fox</p>";
+    document.body.appendChild(host);
+    try {
+      const p = host.querySelector("p")!;
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      expect(offsetsFromRange(host, range)).toEqual({ startOffset: 0, length: "The quick brown fox".length });
     } finally {
       host.remove();
     }

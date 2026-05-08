@@ -41,6 +41,8 @@
 
   /* New tokens introduced by the multi-theme system. */
   --reader-prose-bg: transparent;
+  --reader-selection-bg: rgba(59, 211, 253, 0.46);
+  --reader-selection-text: var(--black);
   --pdf-tint: normal;
 }
 
@@ -91,7 +93,22 @@ html, body, #root {
 }
 
 ::selection {
-  background-color: rgba(67, 8, 159, 0.15);
+  background-color: var(--reader-selection-bg);
+  color: var(--reader-selection-text);
+}
+
+html.reader-sticky-selection-active ::selection {
+  background-color: transparent;
+  color: inherit;
+}
+
+html.reader-sticky-selection-active .textLayer ::selection {
+  background: transparent;
+}
+
+.reader-active-selection-mark {
+  background-color: var(--reader-selection-bg);
+  color: var(--reader-selection-text);
 }
 
 /* Scrollbar */
