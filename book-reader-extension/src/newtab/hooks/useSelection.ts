@@ -20,7 +20,11 @@ export interface SelectionResult {
 
 export interface SelectionOptions {
   anchorContainer?: HTMLElement | null;
-  persistentVisual?: "custom-highlight" | "dom-mark";
+  // "none" disables the visual swap (no CSS Custom Highlight, no sticky class
+  // on <html>) and relies on the browser's native ::selection rendering for
+  // both drag and persisted phases. Use this for surfaces like PDF.js text
+  // layers where the custom highlight pseudo cannot match the canvas glyphs.
+  persistentVisual?: "custom-highlight" | "dom-mark" | "none";
 }
 
 const FRAME_FALLBACK_MS = 16; // Approximately one 60fps frame.
@@ -287,6 +291,7 @@ export function useSelection(container: HTMLElement | null, options: SelectionOp
       clearActiveSelectionVisual();
       return;
     }
+    if (persistentVisual === "none") return;
     setStickySelectionActive(true);
     if (persistentVisual === "dom-mark") {
       suppressSelectionChangeForFrame();

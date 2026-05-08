@@ -122,7 +122,12 @@ export default function PdfViewer({ bookHash, initialPage, initialScrollOffset, 
     onSettingsChange({ ...settingsRef.current, pdfShowThumbnailStrip: nextValue });
   }, [onSettingsChange]);
 
-  const { selection, clearSelection } = useSelection(containerEl);
+  // PDF.js renders text on a canvas with an absolutely-positioned text layer
+  // of `color: transparent` spans on top. CSS Custom Highlight forces those
+  // spans visible inside the highlighted range and ghosts over the canvas
+  // glyphs. Disable the visual swap and rely on native ::selection, which
+  // matches how the canvas renders the text underneath.
+  const { selection, clearSelection } = useSelection(containerEl, { persistentVisual: "none" });
 
   const overlappingHighlightIds = useMemo(() => {
     if (!selection) return [];

@@ -21,6 +21,14 @@
   height: 0;
 }
 
+.textLayer {
+  /* The global ::selection rule sets `color: var(--reader-selection-text)`,
+   * which would force the text-layer spans (normally color: transparent) to
+   * paint inside the selection range and ghost over the canvas glyphs. Scope
+   * the variable to transparent here so the cascade keeps the spans invisible. */
+  --reader-selection-text: transparent;
+}
+
 .textLayer ::selection {
   background: rgba(67, 8, 159, 0.3);
 }
