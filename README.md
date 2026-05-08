@@ -10,6 +10,8 @@
 </p>
 
 <p align="center">
+  <a href="https://chromewebstore.google.com/detail/instant-book-reader/beconkamchfbjkplbapbkhmjdmpjfeni"><strong>Install from Chrome Web Store</strong></a>
+  &nbsp;&middot;&nbsp;
   <a href="https://github.com/aatmik-panse/chrome-reader/releases/latest">Download Latest Release</a>
 </p>
 
