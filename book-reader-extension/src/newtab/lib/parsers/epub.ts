@@ -42,6 +42,12 @@ export interface ParsedEpub {
   chapters: EpubChapter[];
   toc: TocNode[];
   book: Book;
+  /**
+   * Releases blob URLs created for inlined chapter images and tears down
+   * epubjs's internal archive bookkeeping. Call when the book is unloaded
+   * to avoid leaking resources across book switches.
+   */
+  dispose: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,6 +62,13 @@ export async function parseEpub(arrayBuffer: ArrayBuffer): Promise<ParsedEpub> {
   const navigation = await book.loaded.navigation;
   const spineItems = readSpineItems(book);
 
+  // Rewrite every manifest item (images, css, fonts) to a blob: URL so the
+  // serialized chapter HTML can render them without a same-origin fetch.
+  // Without this step, `<img src="../images/foo.jpg">` injected into the
+  // newtab page resolves against `chrome-extension://.../newtab.html` and
+  // 404s, leaving every figure broken.
+  await replaceManifestResources(book);
+
   const chapters = await loadAllChapters(book, spineItems, navigation.toc);
 
   const spineHrefMap = buildSpineHrefMap(spineItems);
@@ -67,13 +80,37 @@ export async function parseEpub(arrayBuffer: ArrayBuffer): Promise<ParsedEpub> {
   const fallbackToc = await buildFallbackToc(book, spineItems, chapters);
   const finalToc = pickWinningToc(primaryToc, fallbackToc);
 
+  const dispose = (): void => {
+    try {
+      book.destroy();
+    } catch {
+      // epubjs occasionally throws when destroying a partially-initialized
+      // book; the URLs are revoked by destroy() best-effort and that's the
+      // important part.
+    }
+  };
+
   return {
     title: metadata.title || "Untitled",
     author: metadata.creator || "Unknown Author",
     chapters,
     toc: finalToc,
     book,
+    dispose,
   };
+}
+
+async function replaceManifestResources(book: Book): Promise<void> {
+  // `resources.replacements()` is async; failures here should not crash the
+  // whole parse — if rewriting fails (e.g. odd archive layout), images stay
+  // broken but the text still renders.
+  const resources = (book as unknown as { resources?: { replacements?: () => Promise<unknown> } }).resources;
+  if (!resources || typeof resources.replacements !== "function") return;
+  try {
+    await resources.replacements();
+  } catch {
+    // Swallow; partial replacements are still applied.
+  }
 }
 
 export function createRendition(book: Book, element: HTMLElement): Rendition {
@@ -112,14 +149,22 @@ async function loadAllChapters(
   const labelByHref = buildNavLabelMap(navigationToc);
   const chapters: EpubChapter[] = [];
 
+  const resources = (book as unknown as { resources?: { substitute?: (content: string, baseHref: string) => string } }).resources;
   for (const item of spineItems) {
     try {
       const doc = await book.load(item.href);
-      const html = new XMLSerializer().serializeToString(doc as Node);
+      const rawHtml = new XMLSerializer().serializeToString(doc as Node);
+      // `substitute` rewrites every relative resource href in the chapter
+      // (img, image, link[href], style url(...)) to the blob: URL produced
+      // by `replacements()`. The base href anchors relative path resolution
+      // to the chapter's location inside the archive.
+      const substitutedHtml = resources && typeof resources.substitute === "function"
+        ? resources.substitute(rawHtml, item.href)
+        : rawHtml;
       chapters.push({
         href: item.href,
         label: labelByHref.get(item.href) || item.href,
-        content: html,
+        content: substitutedHtml,
       });
     } catch {
       // Skip chapters that fail to load — keep going so the rest of the
