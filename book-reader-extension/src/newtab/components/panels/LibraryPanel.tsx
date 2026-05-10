@@ -346,14 +346,8 @@ function LibraryRow({
             />
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className={`clay-badge ${badge.bg} ${badge.text} uppercase text-[9px]`}>
-            {meta.format}
-          </span>
-          <span className="text-[10px] tabular-nums text-silver">{progressLabel}</span>
-        </div>
         {isConfirmingDelete ? (
-          <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+          <div className="flex items-center gap-1 flex-shrink-0" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
               onClick={() => {
@@ -373,44 +367,64 @@ function LibraryRow({
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
-            <Tooltip label={isArchived ? "Move back to active" : "Archive book"} position="left">
-              <button
-                type="button"
-                aria-label={isArchived ? `Unarchive ${meta.title}` : `Archive ${meta.title}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (isArchived) onUnarchive(meta.hash);
-                  else onArchive(meta.hash);
-                }}
-                className="clay-btn-icon !p-1.5"
-              >
-                {isArchived ? (
+          <div className="relative flex-shrink-0 w-12 h-9">
+            {/*
+              Two layers occupying the same slot: the metadata badge column
+              (default) and the action buttons (hover/focus). The slot has a
+              fixed width so the title column doesn't reflow when they swap;
+              we cross-fade with a small slide so the transition reads as
+              motion instead of a flash.
+            */}
+            <div
+              aria-hidden={false}
+              className="absolute inset-0 flex flex-col items-end justify-center gap-1 transition-all duration-150 ease-out group-hover:opacity-0 group-hover:translate-x-1 group-hover:pointer-events-none group-focus-within:opacity-0 group-focus-within:translate-x-1 group-focus-within:pointer-events-none"
+            >
+              <span className={`clay-badge ${badge.bg} ${badge.text} uppercase text-[9px]`}>
+                {meta.format}
+              </span>
+              <span className="text-[10px] tabular-nums text-silver">{progressLabel}</span>
+            </div>
+            <div
+              className="absolute inset-0 flex items-center justify-end gap-0.5 opacity-0 -translate-x-1 pointer-events-none transition-all duration-150 ease-out group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-x-0 group-focus-within:pointer-events-auto"
+            >
+              <Tooltip label={isArchived ? "Move back to active" : "Archive book"} position="left">
+                <button
+                  type="button"
+                  aria-label={isArchived ? `Unarchive ${meta.title}` : `Archive ${meta.title}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (isArchived) onUnarchive(meta.hash);
+                    else onArchive(meta.hash);
+                  }}
+                  className="clay-btn-icon !p-1.5"
+                >
+                  {isArchived ? (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 4.5h8M3 4.5v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5M5 6.5l1 1 1-1M6 7.5V3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 4.5h8M3 4.5v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5M2 2h8v2H2zM5 7h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              </Tooltip>
+              <Tooltip label="Delete book" position="left">
+                <button
+                  type="button"
+                  aria-label={`Delete ${meta.title}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onConfirmDelete(meta.hash);
+                  }}
+                  className="clay-btn-icon !p-1.5"
+                >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 4.5h8M3 4.5v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5M5 6.5l1 1 1-1M6 7.5V3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2.5 3h7M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M8 5v4.5a1 1 0 01-1 1H5a1 1 0 01-1-1V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                ) : (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 4.5h8M3 4.5v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5M2 2h8v2H2zM5 7h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-            </Tooltip>
-            <Tooltip label="Delete book" position="left">
-              <button
-                type="button"
-                aria-label={`Delete ${meta.title}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onConfirmDelete(meta.hash);
-                }}
-                className="clay-btn-icon !p-1.5"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2.5 3h7M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M8 5v4.5a1 1 0 01-1 1H5a1 1 0 01-1-1V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-              </button>
-            </Tooltip>
+                </button>
+              </Tooltip>
+            </div>
           </div>
         )}
       </div>
