@@ -36,12 +36,31 @@ export interface TocNode {
   children: TocNode[];
 }
 
+/**
+ * Result of resolving an in-chapter `<a href>` against the spine. `spineIndex`
+ * is `-1` when the link points outside the spine (a stylesheet, an unknown
+ * resource, etc.) so the caller can fall back to no-op or external-open
+ * behavior.
+ */
+export interface ResolvedSpineLink {
+  spineIndex: number;
+  fragment: string | null;
+}
+
 export interface ParsedEpub {
   title: string;
   author: string;
   chapters: EpubChapter[];
   toc: TocNode[];
   book: Book;
+  /**
+   * Resolves an `<a href>` value found inside a chapter to a spine index +
+   * optional fragment. `fromHref` is the chapter href that contained the
+   * link (the `chapters[i].href` for the active chapter). Returns `null`
+   * when the link is absolute (http/https/mailto/blob/...) so the caller
+   * can decide whether to open it externally.
+   */
+  resolveLink: (fromHref: string, linkHref: string) => ResolvedSpineLink | null;
   /**
    * Releases blob URLs created for inlined chapter images and tears down
    * epubjs's internal archive bookkeeping. Call when the book is unloaded
@@ -90,12 +109,16 @@ export async function parseEpub(arrayBuffer: ArrayBuffer): Promise<ParsedEpub> {
     }
   };
 
+  const resolveLink = (fromHref: string, linkHref: string): ResolvedSpineLink | null =>
+    resolveInChapterLink(spineHrefMap, fromHref, linkHref);
+
   return {
     title: metadata.title || "Untitled",
     author: metadata.creator || "Unknown Author",
     chapters,
     toc: finalToc,
     book,
+    resolveLink,
     dispose,
   };
 }
@@ -252,6 +275,55 @@ function hrefVariants(href: string): string[] {
   const lastSlash = noLeadingDot.lastIndexOf("/");
   if (lastSlash >= 0) variants.add(noLeadingDot.slice(lastSlash + 1));
   return Array.from(variants);
+}
+
+/**
+ * Resolve an `<a href>` value found inside a chapter to a spine index +
+ * fragment. Returns `null` when the link is absolute (http/mailto/blob) so
+ * the caller can decide whether to open it externally.
+ *
+ * `fromHref` is the chapter href containing the link; the link's relative
+ * path is rebased against it so `<a href="../ch2.xhtml#sec">` from
+ * `OEBPS/Text/ch1.xhtml` correctly maps to spine `OEBPS/ch2.xhtml`.
+ */
+function resolveInChapterLink(
+  spineHrefMap: Map<string, number>,
+  fromHref: string,
+  linkHref: string,
+): ResolvedSpineLink | null {
+  if (!linkHref) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(linkHref)) return null; // http:, mailto:, blob:, data:, ...
+  if (linkHref.startsWith("#")) {
+    const fragment = decodeFragment(linkHref.slice(1));
+    return { spineIndex: -1, fragment };
+  }
+  const { pathPart, fragment } = splitHrefAndFragment(linkHref);
+  const resolvedPath = rebasePath(fromHref, pathPart);
+  if (!resolvedPath) return { spineIndex: -1, fragment };
+  const spineIndex = resolveSpineIndex(resolvedPath, spineHrefMap);
+  return { spineIndex, fragment };
+}
+
+function rebasePath(fromHref: string, relativePath: string): string {
+  if (!relativePath) return "";
+  if (relativePath.startsWith("/")) return relativePath.replace(/^\/+/, "");
+  // Use a synthetic origin so the URL parser does standard relative-path
+  // resolution. The origin is discarded; we only keep the pathname.
+  try {
+    const synthetic = new URL(relativePath, `https://x.invalid/${fromHref}`);
+    return synthetic.pathname.replace(/^\/+/, "");
+  } catch {
+    return relativePath;
+  }
+}
+
+function decodeFragment(rawFragment: string): string | null {
+  if (!rawFragment) return null;
+  try {
+    return decodeURIComponent(rawFragment);
+  } catch {
+    return rawFragment;
+  }
 }
 
 function resolveSpineIndex(

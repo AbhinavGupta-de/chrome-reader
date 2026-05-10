@@ -432,6 +432,7 @@ export default function App() {
             aiAvailable={ai.available}
             pendingFragment={pendingFragment}
             onPendingFragmentConsumed={onPendingFragmentConsumed}
+            onNavigateToSpine={jumpToChapter}
           />
         )}
       </AppShell>
