@@ -67,7 +67,7 @@ export async function parseEpub(arrayBuffer: ArrayBuffer): Promise<ParsedEpub> {
   // Without this step, `<img src="../images/foo.jpg">` injected into the
   // newtab page resolves against `chrome-extension://.../newtab.html` and
   // 404s, leaving every figure broken.
-  await replaceManifestResources(book);
+  await runResourceReplacements(book);
 
   const chapters = await loadAllChapters(book, spineItems, navigation.toc);
 
@@ -100,16 +100,28 @@ export async function parseEpub(arrayBuffer: ArrayBuffer): Promise<ParsedEpub> {
   };
 }
 
-async function replaceManifestResources(book: Book): Promise<void> {
-  // `resources.replacements()` is async; failures here should not crash the
-  // whole parse — if rewriting fails (e.g. odd archive layout), images stay
-  // broken but the text still renders.
-  const resources = (book as unknown as { resources?: { replacements?: () => Promise<unknown> } }).resources;
+interface SubstituteFn {
+  (content: string, url?: string): string;
+}
+
+interface ResourcesLike {
+  replacements?: () => Promise<unknown>;
+  substitute?: SubstituteFn;
+}
+
+function getResources(book: Book): ResourcesLike | null {
+  const resources = (book as unknown as { resources?: ResourcesLike }).resources;
+  return resources ?? null;
+}
+
+async function runResourceReplacements(book: Book): Promise<void> {
+  const resources = getResources(book);
   if (!resources || typeof resources.replacements !== "function") return;
   try {
     await resources.replacements();
   } catch {
-    // Swallow; partial replacements are still applied.
+    // Best-effort. A partial replacement is still applied; broken images
+    // are preferable to a fully non-rendering chapter.
   }
 }
 
@@ -127,6 +139,13 @@ export function createRendition(book: Book, element: HTMLElement): Rendition {
 
 interface SpineItemRef {
   href: string;
+  /**
+   * Resolved URL produced by epubjs's spine resolver (e.g. `/OEBPS/Text/cover.xhtml`).
+   * `Resources.substitute` uses this as the anchor for `relativeTo()`, so
+   * passing the raw manifest `href` here would produce mismatched relative
+   * paths and silently leave images broken.
+   */
+  url?: string;
 }
 
 /**
@@ -134,11 +153,11 @@ interface SpineItemRef {
  * and pull only the fields we actually consume.
  */
 function readSpineItems(book: Book): SpineItemRef[] {
-  const spine = (book as unknown as { spine: { items: Array<{ href?: string }> } })
+  const spine = (book as unknown as { spine: { items: Array<{ href?: string; url?: string }> } })
     .spine;
   return spine.items
-    .filter((item): item is { href: string } => typeof item.href === "string" && item.href.length > 0)
-    .map((item) => ({ href: item.href }));
+    .filter((item): item is { href: string; url?: string } => typeof item.href === "string" && item.href.length > 0)
+    .map((item) => ({ href: item.href, url: typeof item.url === "string" ? item.url : undefined }));
 }
 
 async function loadAllChapters(
@@ -148,23 +167,20 @@ async function loadAllChapters(
 ): Promise<EpubChapter[]> {
   const labelByHref = buildNavLabelMap(navigationToc);
   const chapters: EpubChapter[] = [];
+  const resources = getResources(book);
+  const substitute: SubstituteFn | null =
+    resources && typeof resources.substitute === "function" ? resources.substitute.bind(resources) : null;
 
-  const resources = (book as unknown as { resources?: { substitute?: (content: string, baseHref: string) => string } }).resources;
   for (const item of spineItems) {
     try {
       const doc = await book.load(item.href);
+      if (!doc) continue;
       const rawHtml = new XMLSerializer().serializeToString(doc as Node);
-      // `substitute` rewrites every relative resource href in the chapter
-      // (img, image, link[href], style url(...)) to the blob: URL produced
-      // by `replacements()`. The base href anchors relative path resolution
-      // to the chapter's location inside the archive.
-      const substitutedHtml = resources && typeof resources.substitute === "function"
-        ? resources.substitute(rawHtml, item.href)
-        : rawHtml;
+      const html = applyResourceSubstitution(substitute, rawHtml, item);
       chapters.push({
         href: item.href,
         label: labelByHref.get(item.href) || item.href,
-        content: substitutedHtml,
+        content: html,
       });
     } catch {
       // Skip chapters that fail to load — keep going so the rest of the
@@ -173,6 +189,32 @@ async function loadAllChapters(
   }
 
   return chapters;
+}
+
+/**
+ * `resources.substitute(content, url)` does a regex replace of every
+ * manifest URL (relative to `url`) with its blob: replacement. The "url" we
+ * feed it has to match what `Resources.relativeTo` produces internally, or
+ * the relative paths won't line up with the literal strings in the chapter.
+ *
+ * Empirically, the resolved spine `url` is the right anchor — the same one
+ * epubjs's own serialize hook passes when rendering through `book.replacements()`.
+ * We try the resolved url first, then fall back to the raw href, then to no
+ * anchor (which uses the absolute manifest URLs as-is). Whichever pass mutates
+ * the html wins; subsequent passes are cheap no-ops because the relative
+ * paths no longer appear.
+ */
+function applyResourceSubstitution(
+  substitute: SubstituteFn | null,
+  rawHtml: string,
+  item: SpineItemRef,
+): string {
+  if (!substitute) return rawHtml;
+  let html = rawHtml;
+  if (item.url) html = substitute(html, item.url);
+  if (item.href && item.href !== item.url) html = substitute(html, item.href);
+  html = substitute(html);
+  return html;
 }
 
 function buildNavLabelMap(navigationToc: NavItem[]): Map<string, string> {
